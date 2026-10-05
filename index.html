@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>KIJK Pantry</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+
+    <meta name="theme-color" content="#111111">
+</head>
+
+<body>
+
+    <main class="app">
+        <h1>KIJK Pantry</h1>
+
+        <p class="subtitle">Despensa inteligente</p>
+
+        <section class="card">
+            <h2>Lista de compras</h2>
+
+            <div id="lista">
+                <p>Lista vazia.</p>
+            </div>
+        </section>
+
+        <button id="botaoAdicionar">
+            + Adicionar item
+        </button>
+    </main>
+
+    <script src="app.js"></script>
+
+    <script>
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("service-worker.js");
+        }
+    </script>
+
+</body>
+</html>
