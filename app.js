@@ -1,105 +1,67 @@
 const botaoAdicionar = document.getElementById("botaoAdicionar");
 const lista = document.getElementById("lista");
 
-let db;
-
-const request = indexedDB.open("kijkPantryDB", 1);
-
-request.onupgradeneeded = function(event) {
-    db = event.target.result;
-
-    if (!db.objectStoreNames.contains("listaCompras")) {
-        db.createObjectStore("listaCompras", {
-            keyPath: "id",
-            autoIncrement: true
-        });
-    }
-};
-
-request.onsuccess = function(event) {
-    db = event.target.result;
-    carregarLista();
-};
-
-request.onerror = function() {
-    console.error("Erro ao abrir IndexedDB");
-};
+let itens = JSON.parse(
+    localStorage.getItem("kijkPantryLista")
+) || [];
 
 
-function adicionarItem(nome) {
-    const transaction = db.transaction(
-        ["listaCompras"],
-        "readwrite"
+function salvar() {
+    localStorage.setItem(
+        "kijkPantryLista",
+        JSON.stringify(itens)
     );
-
-    const store = transaction.objectStore("listaCompras");
-
-    store.add({
-        nome: nome,
-        criadoEm: new Date().toISOString()
-    });
-
-    transaction.oncomplete = function() {
-        carregarLista();
-    };
 }
 
 
 function carregarLista() {
-    const transaction = db.transaction(
-        ["listaCompras"],
-        "readonly"
-    );
 
-    const store = transaction.objectStore("listaCompras");
+    lista.innerHTML = "";
 
-    const request = store.getAll();
+    if (itens.length === 0) {
+        lista.innerHTML = "<p>Lista vazia.</p>";
+        return;
+    }
 
-    request.onsuccess = function() {
-        const itens = request.result;
+    itens.forEach((item, indice) => {
 
-        lista.innerHTML = "";
+        const linha = document.createElement("div");
 
-        if (itens.length === 0) {
-            lista.innerHTML = "<p>Lista vazia.</p>";
-            return;
-        }
+        linha.className = "item";
 
-        itens.forEach(item => {
-            const linha = document.createElement("div");
+        linha.innerHTML = `
+            <span>${item}</span>
 
-            linha.className = "item";
+            <button onclick="removerItem(${indice})">
+                ✓
+            </button>
+        `;
 
-            linha.innerHTML = `
-                <span>${item.nome}</span>
-                <button onclick="removerItem(${item.id})">
-                    ✓
-                </button>
-            `;
-
-            lista.appendChild(linha);
-        });
-    };
+        lista.appendChild(linha);
+    });
 }
 
 
-function removerItem(id) {
-    const transaction = db.transaction(
-        ["listaCompras"],
-        "readwrite"
-    );
+function adicionarItem(nome) {
 
-    const store = transaction.objectStore("listaCompras");
+    itens.push(nome);
 
-    store.delete(id);
+    salvar();
+    carregarLista();
+}
 
-    transaction.oncomplete = function() {
-        carregarLista();
-    };
+
+function removerItem(indice) {
+
+    itens.splice(indice, 1);
+
+    salvar();
+    carregarLista();
 }
 
 
 botaoAdicionar.addEventListener("click", () => {
+
     const nome = prompt("Nome do produto:");
 
     if (!nome || !nome.trim()) {
@@ -108,3 +70,6 @@ botaoAdicionar.addEventListener("click", () => {
 
     adicionarItem(nome.trim());
 });
+
+
+carregarLista();
