@@ -2,32 +2,19 @@
 <html lang="pt-BR">
 
 <head>
-
     <meta charset="UTF-8">
 
     <meta
         name="viewport"
-        content="width=device-width,
-        initial-scale=1.0"
+        content="width=device-width, initial-scale=1.0"
     >
 
-    <title>KIJK Pantry V0.8</title>
+    <title>KIJK Pantry V0.9</title>
 
-    <link
-        rel="manifest"
-        href="manifest.json"
-    >
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
 
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
-
-    <meta
-        name="theme-color"
-        content="#171717"
-    >
-
+    <meta name="theme-color" content="#171717">
 </head>
 
 
@@ -35,45 +22,26 @@
 
     <main class="app">
 
-
         <header class="topo">
 
             <div>
-
-                <h1>
-                    KIJK Pantry
-                </h1>
-
-                <p>
-                    Despensa inteligente
-                </p>
-
+                <h1>KIJK Pantry</h1>
+                <p>Despensa inteligente</p>
             </div>
 
-
             <div class="contador">
-
-                <strong id="contador">
-                    0
-                </strong>
-
-                <span>
-                    itens
-                </span>
-
+                <strong id="contador">0</strong>
+                <span>itens</span>
             </div>
 
         </header>
-
 
 
         <section class="card">
 
             <div class="card-cabecalho">
 
-                <h2>
-                    Lista de compras
-                </h2>
+                <h2>Lista de compras</h2>
 
                 <button
                     id="botaoLimpar"
@@ -84,34 +52,31 @@
 
             </div>
 
-
             <div id="lista">
-
                 <div class="estado-vazio">
                     Nenhum item na lista
                 </div>
-
             </div>
 
         </section>
 
 
-
         <section class="acoes">
 
             <button
-                id="botaoCodigo"
+                id="botaoScanner"
                 class="botao destaque"
             >
+                <span class="icone">▦</span>
+                <span>Escanear código</span>
+            </button>
 
-                <span class="icone">
-                    ▦
-                </span>
 
-                <span>
-                    Adicionar por código
-                </span>
-
+            <button
+                id="botaoCodigo"
+                class="botao"
+            >
+                Digitar código
             </button>
 
 
@@ -119,15 +84,8 @@
                 id="botaoAdicionar"
                 class="botao"
             >
-
-                <span class="icone">
-                    +
-                </span>
-
-                <span>
-                    Adicionar manualmente
-                </span>
-
+                <span class="icone">+</span>
+                <span>Adicionar manualmente</span>
             </button>
 
 
@@ -135,13 +93,10 @@
                 id="botaoProdutos"
                 class="botao discreto"
             >
-
                 Produtos cadastrados
-
             </button>
 
         </section>
-
 
 
         <section
@@ -150,71 +105,79 @@
             hidden
         >
 
-            <h2>
-                Produtos cadastrados
-            </h2>
+            <h2>Produtos cadastrados</h2>
 
-            <div id="produtosBox">
-            </div>
+            <div id="produtosBox"></div>
 
         </section>
 
 
-
         <footer>
-            KIJK Pantry V0.8
+            KIJK Pantry V0.9
         </footer>
 
     </main>
 
 
+    <!-- SCANNER -->
+
+    <div
+        id="scannerModal"
+        class="scanner-modal"
+        hidden
+    >
+
+        <div class="scanner-conteudo">
+
+            <h2>Escanear produto</h2>
+
+            <p>
+                Posicione o código de barras dentro da câmera.
+            </p>
+
+            <div id="reader"></div>
+
+            <button
+                id="botaoFecharScanner"
+                class="botao fechar-scanner"
+            >
+                Cancelar
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <script
+        src="https://unpkg.com/html5-qrcode"
+    ></script>
+
     <script src="app.js"></script>
 
 
+    <!-- Mantemos cache/service worker desligado enquanto desenvolvemos -->
+
     <script>
-
-        if (
-            "serviceWorker"
-            in navigator
-        ) {
-
-            navigator
-                .serviceWorker
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker
                 .getRegistrations()
-                .then(
-                    registrations => {
-
-                        registrations
-                            .forEach(
-                                registration =>
-                                    registration
-                                        .unregister()
-                            );
-
-                    }
-                );
-
+                .then(registrations => {
+                    registrations.forEach(
+                        registration =>
+                            registration.unregister()
+                    );
+                });
         }
-
 
         if ("caches" in window) {
-
-            caches.keys()
-                .then(names => {
-
-                    names.forEach(
-                        name =>
-                            caches.delete(
-                                name
-                            )
-                    );
-
-                });
-
+            caches.keys().then(names => {
+                names.forEach(
+                    name => caches.delete(name)
+                );
+            });
         }
-
     </script>
 
 </body>
-
 </html>

@@ -1,353 +1,68 @@
-* {
-    box-sizing: border-box;
-}
+.scanner-modal {
+    position: fixed;
 
+    inset: 0;
 
-body {
-    margin: 0;
+    z-index: 999;
 
-    font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
+    background: rgba(0, 0, 0, .92);
 
-    background: #f5f5f3;
-
-    color: #202020;
-}
-
-
-button {
-    font-family: inherit;
-}
-
-
-.app {
-    width: 100%;
-    max-width: 520px;
-
-    margin: auto;
-
-    padding:
-        28px
-        18px
-        42px;
-}
-
-
-.topo {
     display: flex;
-
-    justify-content:
-        space-between;
 
     align-items: center;
-
-    margin-bottom: 28px;
-}
-
-
-.topo h1 {
-    margin: 0;
-
-    font-size: 28px;
-
-    letter-spacing: -0.8px;
-}
-
-
-.topo p {
-    margin: 4px 0 0;
-
-    font-size: 14px;
-
-    color: #7a7a7a;
-}
-
-
-.contador {
-    width: 68px;
-    height: 62px;
-
-    background: #1d1d1d;
-
-    color: white;
-
-    border-radius: 18px;
-
-    display: flex;
-
-    flex-direction: column;
 
     justify-content: center;
 
-    align-items: center;
+    padding: 18px;
 }
 
 
-.contador strong {
-    font-size: 21px;
+.scanner-modal[hidden] {
+    display: none;
 }
 
 
-.contador span {
-    margin-top: 1px;
+.scanner-conteudo {
+    width: 100%;
+    max-width: 480px;
 
-    font-size: 10px;
-
-    opacity: .7;
-}
-
-
-.card {
-    background: white;
+    background: #ffffff;
 
     border-radius: 22px;
 
     padding: 20px;
-
-    box-shadow:
-        0 6px 24px
-        rgba(0, 0, 0, .05);
 }
 
 
-.card-cabecalho {
-    display: flex;
+.scanner-conteudo h2 {
+    margin: 0 0 5px;
 
-    align-items: center;
-
-    justify-content:
-        space-between;
-
-    margin-bottom: 8px;
+    text-align: center;
 }
 
 
-.card h2 {
-    margin: 0;
-
-    font-size: 18px;
-}
-
-
-.limpar {
-    border: none;
-
-    background: transparent;
-
-    padding: 6px;
-
-    color: #999;
-
-    font-size: 13px;
-}
-
-
-.estado-vazio {
-    padding: 30px 0;
+.scanner-conteudo p {
+    margin: 0 0 18px;
 
     text-align: center;
 
-    color: #aaa;
+    color: #777;
 
     font-size: 14px;
 }
 
 
-.item {
-    min-height: 62px;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content:
-        space-between;
-
-    gap: 10px;
-
-    border-bottom:
-        1px solid #eeeeec;
-}
-
-
-.item:last-child {
-    border-bottom: none;
-}
-
-
-.item-dados {
-    display: flex;
-
-    align-items: center;
-
-    gap: 8px;
-}
-
-
-.item-nome {
-    font-size: 16px;
-
-    font-weight: 600;
-}
-
-
-.item-quantidade {
-    color: #999;
-
-    font-size: 13px;
-}
-
-
-.item-acoes {
-    display: flex;
-
-    gap: 6px;
-}
-
-
-.acao {
-    width: 34px;
-    height: 34px;
-
-    border: none;
-
-    border-radius: 11px;
-
-    font-size: 18px;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-}
-
-
-.quantidade {
-    background: #f0f0ee;
-
-    color: #333;
-}
-
-
-.concluir {
-    background: #252525;
-
-    color: white;
-}
-
-
-.acoes {
-    display: grid;
-
-    gap: 10px;
-
-    margin-top: 18px;
-}
-
-
-.botao {
+#reader {
     width: 100%;
 
-    min-height: 56px;
+    overflow: hidden;
 
-    border: none;
+    border-radius: 16px;
+}
 
-    border-radius: 17px;
+
+.fechar-scanner {
+    margin-top: 16px;
 
     background: #e9e9e6;
-
-    color: #252525;
-
-    font-size: 15px;
-
-    font-weight: 600;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    gap: 9px;
-}
-
-
-.botao.destaque {
-    background: #202020;
-
-    color: white;
-
-    min-height: 62px;
-
-    font-size: 16px;
-}
-
-
-.botao.discreto {
-    min-height: 48px;
-
-    background: transparent;
-
-    border:
-        1px solid #dadad7;
-
-    color: #777;
-
-    font-weight: 500;
-}
-
-
-.icone {
-    font-size: 21px;
-}
-
-
-.produtos {
-    margin-top: 14px;
-}
-
-
-.produto-cadastrado {
-    padding: 13px 0;
-
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 4px;
-
-    border-bottom:
-        1px solid #eeeeec;
-}
-
-
-.produto-cadastrado:last-child {
-    border-bottom: none;
-}
-
-
-.produto-cadastrado strong {
-    font-size: 15px;
-}
-
-
-.produto-cadastrado span {
-    font-size: 12px;
-
-    color: #999;
-}
-
-
-footer {
-    margin-top: 24px;
-
-    text-align: center;
-
-    color: #b0b0b0;
-
-    font-size: 11px;
 }
