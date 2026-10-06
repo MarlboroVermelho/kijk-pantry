@@ -1,4 +1,4 @@
-const CACHE_NAME = "kijk-pantry-v4";
+const CACHE_NAME = "kijk-pantry-v6";
 
 const ARQUIVOS = [
     "./",
