@@ -2,46 +2,74 @@
 <html lang="pt-BR">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0"
+        content="width=device-width,
+        initial-scale=1.0"
     >
 
     <title>KIJK Pantry V0.8</title>
 
-    <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css">
+    <link
+        rel="manifest"
+        href="manifest.json"
+    >
 
-    <meta name="theme-color" content="#111111">
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+    <meta
+        name="theme-color"
+        content="#171717"
+    >
+
 </head>
+
 
 <body>
 
     <main class="app">
 
+
         <header class="topo">
 
             <div>
-                <h1>KIJK Pantry</h1>
 
-                <p class="subtitle">
+                <h1>
+                    KIJK Pantry
+                </h1>
+
+                <p>
                     Despensa inteligente
                 </p>
+
             </div>
 
-            <div class="contador-box">
-                <span id="contador">0</span>
-                <small>itens</small>
+
+            <div class="contador">
+
+                <strong id="contador">
+                    0
+                </strong>
+
+                <span>
+                    itens
+                </span>
+
             </div>
 
         </header>
 
 
+
         <section class="card">
 
-            <div class="card-topo">
+            <div class="card-cabecalho">
 
                 <h2>
                     Lista de compras
@@ -49,7 +77,7 @@
 
                 <button
                     id="botaoLimpar"
-                    class="botao-limpar"
+                    class="limpar"
                 >
                     Limpar
                 </button>
@@ -59,8 +87,8 @@
 
             <div id="lista">
 
-                <div class="lista-vazia">
-                    <p>Sua lista está vazia.</p>
+                <div class="estado-vazio">
+                    Nenhum item na lista
                 </div>
 
             </div>
@@ -68,47 +96,74 @@
         </section>
 
 
-        <div class="acoes-principais">
+
+        <section class="acoes">
 
             <button
                 id="botaoCodigo"
-                class="botao-principal"
+                class="botao destaque"
             >
-                📦 Adicionar por código
+
+                <span class="icone">
+                    ▦
+                </span>
+
+                <span>
+                    Adicionar por código
+                </span>
+
             </button>
+
 
             <button
                 id="botaoAdicionar"
-                class="botao-secundario"
+                class="botao"
             >
-                + Adicionar manualmente
+
+                <span class="icone">
+                    +
+                </span>
+
+                <span>
+                    Adicionar manualmente
+                </span>
+
             </button>
 
-        </div>
+
+            <button
+                id="botaoProdutos"
+                class="botao discreto"
+            >
+
+                Produtos cadastrados
+
+            </button>
+
+        </section>
 
 
-        <button
-            id="botaoProdutos"
-            class="botao-produtos"
+
+        <section
+            id="areaProdutos"
+            class="card produtos"
+            hidden
         >
-            Produtos cadastrados
-        </button>
-
-
-        <section class="card produtos-card oculto">
 
             <h2>
                 Produtos cadastrados
             </h2>
 
-            <div id="produtosBox"></div>
+            <div id="produtosBox">
+            </div>
 
         </section>
 
 
-        <p class="versao">
+
+        <footer>
             KIJK Pantry V0.8
-        </p>
+        </footer>
 
     </main>
 
@@ -117,27 +172,47 @@
 
 
     <script>
-        if ("serviceWorker" in navigator) {
-            navigator.serviceWorker
+
+        if (
+            "serviceWorker"
+            in navigator
+        ) {
+
+            navigator
+                .serviceWorker
                 .getRegistrations()
-                .then(registrations => {
+                .then(
+                    registrations => {
 
-                    registrations.forEach(registration => {
-                        registration.unregister();
-                    });
+                        registrations
+                            .forEach(
+                                registration =>
+                                    registration
+                                        .unregister()
+                            );
 
-                });
+                    }
+                );
+
         }
+
 
         if ("caches" in window) {
-            caches.keys().then(names => {
 
-                names.forEach(name => {
-                    caches.delete(name);
+            caches.keys()
+                .then(names => {
+
+                    names.forEach(
+                        name =>
+                            caches.delete(
+                                name
+                            )
+                    );
+
                 });
 
-            });
         }
+
     </script>
 
 </body>

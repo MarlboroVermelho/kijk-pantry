@@ -3,362 +3,432 @@ const VERSAO = "0.8";
 const CHAVE_LISTA = "kijkPantryLista";
 const CHAVE_PRODUTOS = "kijkPantryProdutos";
 
-const botaoAdicionar = document.getElementById("botaoAdicionar");
-const botaoCodigo = document.getElementById("botaoCodigo");
-const botaoProdutos = document.getElementById("botaoProdutos");
-const botaoLimpar = document.getElementById("botaoLimpar");
-
-const lista = document.getElementById("lista");
-const contador = document.getElementById("contador");
-const produtosBox = document.getElementById("produtosBox");
-
 let itens = [];
 let produtos = [];
 
 
-function carregarDados() {
-    try {
-        const listaSalva = localStorage.getItem(CHAVE_LISTA);
-        const produtosSalvos = localStorage.getItem(CHAVE_PRODUTOS);
+document.addEventListener("DOMContentLoaded", () => {
 
-        itens = listaSalva
-            ? JSON.parse(listaSalva)
-            : [];
+    const lista = document.getElementById("lista");
+    const contador = document.getElementById("contador");
 
-        produtos = produtosSalvos
-            ? JSON.parse(produtosSalvos)
-            : [];
+    const botaoAdicionar = document.getElementById("botaoAdicionar");
+    const botaoCodigo = document.getElementById("botaoCodigo");
+    const botaoProdutos = document.getElementById("botaoProdutos");
+    const botaoLimpar = document.getElementById("botaoLimpar");
 
-    } catch (erro) {
-        console.error("Erro ao carregar dados:", erro);
-
-        itens = [];
-        produtos = [];
-    }
-}
+    const areaProdutos = document.getElementById("areaProdutos");
+    const produtosBox = document.getElementById("produtosBox");
 
 
-function salvarLista() {
-    localStorage.setItem(
-        CHAVE_LISTA,
-        JSON.stringify(itens)
-    );
-}
+    function carregarDados() {
 
+        try {
+            const listaSalva =
+                localStorage.getItem(CHAVE_LISTA);
 
-function salvarProdutos() {
-    localStorage.setItem(
-        CHAVE_PRODUTOS,
-        JSON.stringify(produtos)
-    );
-}
+            const produtosSalvos =
+                localStorage.getItem(CHAVE_PRODUTOS);
 
+            itens = listaSalva
+                ? JSON.parse(listaSalva)
+                : [];
 
-function totalItens() {
-    return itens.reduce(
-        (total, item) => total + item.quantidade,
-        0
-    );
-}
+            produtos = produtosSalvos
+                ? JSON.parse(produtosSalvos)
+                : [];
 
+        } catch (erro) {
+            console.error("Erro ao carregar dados:", erro);
 
-function atualizarLista() {
-    lista.innerHTML = "";
-
-    contador.textContent = totalItens();
-
-    if (itens.length === 0) {
-        lista.innerHTML = `
-            <div class="lista-vazia">
-                <p>Sua lista está vazia.</p>
-            </div>
-        `;
-
-        return;
+            itens = [];
+            produtos = [];
+        }
     }
 
-    itens.forEach((item, indice) => {
-        const linha = document.createElement("div");
 
-        linha.className = "item";
-
-        linha.innerHTML = `
-            <div class="item-info">
-                <span class="item-nome">
-                    ${item.nome}
-                </span>
-
-                <span class="item-quantidade">
-                    x${item.quantidade}
-                </span>
-            </div>
-
-            <div class="item-acoes">
-
-                <button
-                    class="botao-quantidade"
-                    onclick="diminuirQuantidade(${indice})"
-                >
-                    −
-                </button>
-
-                <button
-                    class="botao-quantidade"
-                    onclick="aumentarQuantidade(${indice})"
-                >
-                    +
-                </button>
-
-                <button
-                    class="botao-comprado"
-                    onclick="marcarComprado(${indice})"
-                >
-                    ✓
-                </button>
-
-            </div>
-        `;
-
-        lista.appendChild(linha);
-    });
-}
-
-
-function atualizarProdutos() {
-    produtosBox.innerHTML = "";
-
-    if (produtos.length === 0) {
-        produtosBox.innerHTML = `
-            <p class="lista-vazia">
-                Nenhum produto cadastrado.
-            </p>
-        `;
-
-        return;
+    function salvarLista() {
+        localStorage.setItem(
+            CHAVE_LISTA,
+            JSON.stringify(itens)
+        );
     }
 
-    produtos.forEach(produto => {
-        const linha = document.createElement("div");
 
-        linha.className = "produto-cadastrado";
-
-        linha.innerHTML = `
-            <span class="produto-nome">
-                ${produto.nome}
-            </span>
-
-            <span class="produto-ean">
-                ${produto.ean}
-            </span>
-        `;
-
-        produtosBox.appendChild(linha);
-    });
-}
+    function salvarProdutos() {
+        localStorage.setItem(
+            CHAVE_PRODUTOS,
+            JSON.stringify(produtos)
+        );
+    }
 
 
-function adicionarItem(nome) {
-    nome = nome.trim();
+    function totalItens() {
+        return itens.reduce(
+            (total, item) =>
+                total + item.quantidade,
+            0
+        );
+    }
 
-    const existente = itens.find(
-        item =>
-            item.nome.toLowerCase() ===
-            nome.toLowerCase()
-    );
 
-    if (existente) {
-        existente.quantidade++;
-    } else {
-        itens.push({
-            nome: nome,
-            quantidade: 1
+    function atualizarLista() {
+
+        lista.innerHTML = "";
+
+        contador.textContent = totalItens();
+
+        if (itens.length === 0) {
+
+            lista.innerHTML = `
+                <div class="estado-vazio">
+                    Nenhum item na lista
+                </div>
+            `;
+
+            return;
+        }
+
+
+        itens.forEach((item, indice) => {
+
+            const linha =
+                document.createElement("div");
+
+            linha.className = "item";
+
+            linha.innerHTML = `
+                <div class="item-dados">
+
+                    <span class="item-nome">
+                        ${item.nome}
+                    </span>
+
+                    <span class="item-quantidade">
+                        x${item.quantidade}
+                    </span>
+
+                </div>
+
+
+                <div class="item-acoes">
+
+                    <button
+                        class="acao quantidade"
+                        data-acao="menos"
+                        data-indice="${indice}"
+                    >
+                        −
+                    </button>
+
+                    <button
+                        class="acao quantidade"
+                        data-acao="mais"
+                        data-indice="${indice}"
+                    >
+                        +
+                    </button>
+
+                    <button
+                        class="acao concluir"
+                        data-acao="comprado"
+                        data-indice="${indice}"
+                    >
+                        ✓
+                    </button>
+
+                </div>
+            `;
+
+            lista.appendChild(linha);
         });
     }
 
-    salvarLista();
-    atualizarLista();
-}
+
+    function atualizarProdutos() {
+
+        produtosBox.innerHTML = "";
+
+        if (produtos.length === 0) {
+
+            produtosBox.innerHTML = `
+                <div class="estado-vazio">
+                    Nenhum produto cadastrado
+                </div>
+            `;
+
+            return;
+        }
 
 
-function aumentarQuantidade(indice) {
-    itens[indice].quantidade++;
+        produtos.forEach(produto => {
 
-    salvarLista();
-    atualizarLista();
-}
+            const linha =
+                document.createElement("div");
 
+            linha.className =
+                "produto-cadastrado";
 
-function diminuirQuantidade(indice) {
-    itens[indice].quantidade--;
+            linha.innerHTML = `
+                <strong>
+                    ${produto.nome}
+                </strong>
 
-    if (itens[indice].quantidade <= 0) {
-        itens.splice(indice, 1);
+                <span>
+                    EAN ${produto.ean}
+                </span>
+            `;
+
+            produtosBox.appendChild(linha);
+        });
     }
 
-    salvarLista();
-    atualizarLista();
-}
 
+    function adicionarItem(nome) {
 
-function marcarComprado(indice) {
-    itens.splice(indice, 1);
+        nome = nome.trim();
 
-    salvarLista();
-    atualizarLista();
-}
-
-
-function limparLista() {
-    if (itens.length === 0) {
-        return;
-    }
-
-    const confirmar = confirm(
-        "Limpar toda a lista de compras?"
-    );
-
-    if (!confirmar) {
-        return;
-    }
-
-    itens = [];
-
-    salvarLista();
-    atualizarLista();
-}
-
-
-function buscarProdutoPorEAN(ean) {
-    return produtos.find(
-        produto => produto.ean === ean
-    );
-}
-
-
-function cadastrarProduto(ean, nome) {
-    produtos.push({
-        ean: ean,
-        nome: nome
-    });
-
-    salvarProdutos();
-    atualizarProdutos();
-}
-
-
-function adicionarPorCodigo() {
-    const ean = prompt(
-        "Digite o código de barras (EAN):"
-    );
-
-    if (!ean || !ean.trim()) {
-        return;
-    }
-
-    const codigo = ean.trim();
-
-    const produto = buscarProdutoPorEAN(codigo);
-
-    if (produto) {
-        adicionarItem(produto.nome);
-
-        alert(
-            `${produto.nome} adicionado à lista.`
+        const existente = itens.find(
+            item =>
+                item.nome.toLowerCase() ===
+                nome.toLowerCase()
         );
 
-        return;
+        if (existente) {
+            existente.quantidade++;
+
+        } else {
+
+            itens.push({
+                nome: nome,
+                quantidade: 1
+            });
+        }
+
+        salvarLista();
+        atualizarLista();
     }
 
-    const nome = prompt(
-        "Produto não cadastrado.\n\nDigite o nome do produto:"
-    );
 
-    if (!nome || !nome.trim()) {
-        return;
-    }
+    function adicionarManualmente() {
 
-    cadastrarProduto(
-        codigo,
-        nome.trim()
-    );
-
-    adicionarItem(
-        nome.trim()
-    );
-
-    alert(
-        `${nome.trim()} cadastrado e adicionado à lista.`
-    );
-}
-
-
-function adicionarManualmente() {
-    const nome = prompt(
-        "Nome do produto:"
-    );
-
-    if (!nome || !nome.trim()) {
-        return;
-    }
-
-    adicionarItem(
-        nome.trim()
-    );
-}
-
-
-function alternarProdutos() {
-    const estaOculto =
-        produtosBox.parentElement.classList.contains(
-            "oculto"
+        const nome = prompt(
+            "Nome do produto:"
         );
 
-    if (estaOculto) {
-        produtosBox.parentElement.classList.remove(
-            "oculto"
+        if (!nome || !nome.trim()) {
+            return;
+        }
+
+        adicionarItem(nome);
+    }
+
+
+    function buscarProdutoPorEAN(ean) {
+
+        return produtos.find(
+            produto =>
+                produto.ean === ean
+        );
+    }
+
+
+    function adicionarPorCodigo() {
+
+        const entrada = prompt(
+            "Digite o código de barras (EAN):"
         );
 
-        botaoProdutos.textContent =
-            "Ocultar produtos";
+        if (!entrada) {
+            return;
+        }
 
+        const ean =
+            entrada.replace(/\D/g, "");
+
+        if (!ean) {
+
+            alert(
+                "Digite um código de barras válido."
+            );
+
+            return;
+        }
+
+
+        const produto =
+            buscarProdutoPorEAN(ean);
+
+
+        if (produto) {
+
+            adicionarItem(
+                produto.nome
+            );
+
+            alert(
+                `${produto.nome} adicionado à lista.`
+            );
+
+            return;
+        }
+
+
+        const nome = prompt(
+            "Código ainda não cadastrado.\n\nQual é o nome do produto?"
+        );
+
+        if (!nome || !nome.trim()) {
+            return;
+        }
+
+
+        produtos.push({
+            ean: ean,
+            nome: nome.trim()
+        });
+
+        salvarProdutos();
         atualizarProdutos();
 
-    } else {
-        produtosBox.parentElement.classList.add(
-            "oculto"
+        adicionarItem(
+            nome.trim()
         );
 
-        botaoProdutos.textContent =
-            "Produtos cadastrados";
+        alert(
+            `${nome.trim()} cadastrado e adicionado.`
+        );
     }
-}
 
 
-botaoAdicionar.addEventListener(
-    "click",
-    adicionarManualmente
-);
+    function limparLista() {
 
-botaoCodigo.addEventListener(
-    "click",
-    adicionarPorCodigo
-);
+        if (itens.length === 0) {
+            return;
+        }
 
-botaoProdutos.addEventListener(
-    "click",
-    alternarProdutos
-);
+        const confirmar = confirm(
+            "Limpar toda a lista?"
+        );
 
-botaoLimpar.addEventListener(
-    "click",
-    limparLista
-);
+        if (!confirmar) {
+            return;
+        }
+
+        itens = [];
+
+        salvarLista();
+        atualizarLista();
+    }
 
 
-carregarDados();
+    function alternarProdutos() {
 
-atualizarLista();
-atualizarProdutos();
+        const oculto =
+            areaProdutos.hidden;
 
-document.title =
-    `KIJK Pantry V${VERSAO}`;
+        areaProdutos.hidden =
+            !oculto;
+
+        botaoProdutos.textContent =
+            oculto
+                ? "Ocultar produtos cadastrados"
+                : "Produtos cadastrados";
+
+        if (oculto) {
+            atualizarProdutos();
+        }
+    }
+
+
+    lista.addEventListener(
+        "click",
+        event => {
+
+            const botao =
+                event.target.closest(
+                    "[data-acao]"
+                );
+
+            if (!botao) {
+                return;
+            }
+
+            const indice =
+                Number(
+                    botao.dataset.indice
+                );
+
+            const acao =
+                botao.dataset.acao;
+
+
+            if (acao === "mais") {
+
+                itens[indice]
+                    .quantidade++;
+
+            }
+
+
+            if (acao === "menos") {
+
+                itens[indice]
+                    .quantidade--;
+
+                if (
+                    itens[indice]
+                        .quantidade <= 0
+                ) {
+                    itens.splice(
+                        indice,
+                        1
+                    );
+                }
+            }
+
+
+            if (acao === "comprado") {
+
+                itens.splice(
+                    indice,
+                    1
+                );
+            }
+
+
+            salvarLista();
+            atualizarLista();
+        }
+    );
+
+
+    botaoAdicionar.addEventListener(
+        "click",
+        adicionarManualmente
+    );
+
+
+    botaoCodigo.addEventListener(
+        "click",
+        adicionarPorCodigo
+    );
+
+
+    botaoProdutos.addEventListener(
+        "click",
+        alternarProdutos
+    );
+
+
+    botaoLimpar.addEventListener(
+        "click",
+        limparLista
+    );
+
+
+    carregarDados();
+    atualizarLista();
+    atualizarProdutos();
+
+});
