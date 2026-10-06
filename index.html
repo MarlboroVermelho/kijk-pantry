@@ -1,13 +1,18 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>KIJK Pantry</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>KIJK Pantry V0.6</title>
 
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="style.css">
 
     <meta name="theme-color" content="#111111">
 </head>
@@ -15,30 +20,61 @@
 <body>
 
     <main class="app">
+
         <h1>KIJK Pantry</h1>
 
-        <p class="subtitle">Despensa inteligente</p>
+        <p class="subtitle">
+            Despensa inteligente
+        </p>
 
         <section class="card">
+
             <h2>Lista de compras</h2>
 
             <div id="lista">
                 <p>Lista vazia.</p>
             </div>
+
         </section>
 
         <button id="botaoAdicionar">
             + Adicionar item
         </button>
+
     </main>
 
-    <script src="app.js?v=6"></script>
+
+    <script src="app.js"></script>
+
 
     <script>
+        // Durante o desenvolvimento, remove service workers antigos
+        // e limpa caches para evitar carregar versões velhas do app.
+
         if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("service-worker.js");
+            navigator.serviceWorker
+                .getRegistrations()
+                .then(registrations => {
+
+                    registrations.forEach(registration => {
+                        registration.unregister();
+                    });
+
+                });
+        }
+
+
+        if ("caches" in window) {
+            caches.keys().then(names => {
+
+                names.forEach(name => {
+                    caches.delete(name);
+                });
+
+            });
         }
     </script>
 
 </body>
+
 </html>

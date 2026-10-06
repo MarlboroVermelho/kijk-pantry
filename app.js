@@ -1,41 +1,22 @@
+const VERSAO = "0.6";
+const CHAVE = "kijkPantryLista";
+
 const botaoAdicionar = document.getElementById("botaoAdicionar");
 const lista = document.getElementById("lista");
 
-const CHAVE = "kijkPantryListaV2";
-
 let itens = [];
 
-
 function carregarDados() {
-    try {
-        const dadosSalvos = localStorage.getItem(CHAVE);
+    const salvo = localStorage.getItem(CHAVE);
 
-        if (dadosSalvos) {
-            itens = JSON.parse(dadosSalvos);
-        } else {
-            itens = [];
-        }
-    } catch (erro) {
-        console.error("Erro ao carregar:", erro);
-        itens = [];
+    if (salvo) {
+        itens = JSON.parse(salvo);
     }
 }
-
 
 function salvarDados() {
-    try {
-        localStorage.setItem(
-            CHAVE,
-            JSON.stringify(itens)
-        );
-
-        return true;
-    } catch (erro) {
-        console.error("Erro ao salvar:", erro);
-        return false;
-    }
+    localStorage.setItem(CHAVE, JSON.stringify(itens));
 }
-
 
 function atualizarLista() {
     lista.innerHTML = "";
@@ -47,23 +28,15 @@ function atualizarLista() {
 
     itens.forEach((item, indice) => {
         const linha = document.createElement("div");
-
         linha.className = "item";
-
-        const quantidade =
-            item.quantidade > 1
-                ? ` x${item.quantidade}`
-                : "";
 
         linha.innerHTML = `
             <span>
-                ${item.nome}${quantidade}
+                ${item.nome}
+                ${item.quantidade > 1 ? `x${item.quantidade}` : ""}
             </span>
 
-            <button
-                type="button"
-                onclick="marcarComprado(${indice})"
-            >
+            <button onclick="marcarComprado(${indice})">
                 ✓
             </button>
         `;
@@ -72,21 +45,18 @@ function atualizarLista() {
     });
 }
 
-
 function adicionarItem(nome) {
-    const nomeNormalizado = nome.trim();
+    nome = nome.trim();
 
     const existente = itens.find(
-        item =>
-            item.nome.toLowerCase() ===
-            nomeNormalizado.toLowerCase()
+        item => item.nome.toLowerCase() === nome.toLowerCase()
     );
 
     if (existente) {
-        existente.quantidade += 1;
+        existente.quantidade++;
     } else {
         itens.push({
-            nome: nomeNormalizado,
+            nome: nome,
             quantidade: 1
         });
     }
@@ -95,14 +65,12 @@ function adicionarItem(nome) {
     atualizarLista();
 }
 
-
 function marcarComprado(indice) {
     itens.splice(indice, 1);
 
     salvarDados();
     atualizarLista();
 }
-
 
 botaoAdicionar.addEventListener("click", () => {
     const nome = prompt("Nome do produto:");
@@ -114,6 +82,7 @@ botaoAdicionar.addEventListener("click", () => {
     adicionarItem(nome);
 });
 
-
 carregarDados();
 atualizarLista();
+
+document.title = `KIJK Pantry V${VERSAO}`;
