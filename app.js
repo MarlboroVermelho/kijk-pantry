@@ -1,55 +1,112 @@
-const VERSAO = "0.6";
+const VERSAO = "0.7";
 const CHAVE = "kijkPantryLista";
 
 const botaoAdicionar = document.getElementById("botaoAdicionar");
+const botaoLimpar = document.getElementById("botaoLimpar");
 const lista = document.getElementById("lista");
+const contador = document.getElementById("contador");
 
 let itens = [];
+
 
 function carregarDados() {
     const salvo = localStorage.getItem(CHAVE);
 
     if (salvo) {
-        itens = JSON.parse(salvo);
+        try {
+            itens = JSON.parse(salvo);
+        } catch {
+            itens = [];
+        }
     }
 }
 
+
 function salvarDados() {
-    localStorage.setItem(CHAVE, JSON.stringify(itens));
+    localStorage.setItem(
+        CHAVE,
+        JSON.stringify(itens)
+    );
 }
+
+
+function totalItens() {
+    return itens.reduce(
+        (total, item) => total + item.quantidade,
+        0
+    );
+}
+
 
 function atualizarLista() {
     lista.innerHTML = "";
 
+    contador.textContent = totalItens();
+
     if (itens.length === 0) {
-        lista.innerHTML = "<p>Lista vazia.</p>";
+        lista.innerHTML = `
+            <div class="lista-vazia">
+                <p>Sua lista está vazia.</p>
+            </div>
+        `;
+
         return;
     }
 
     itens.forEach((item, indice) => {
         const linha = document.createElement("div");
+
         linha.className = "item";
 
         linha.innerHTML = `
-            <span>
-                ${item.nome}
-                ${item.quantidade > 1 ? `x${item.quantidade}` : ""}
-            </span>
+            <div class="item-info">
+                <span class="item-nome">
+                    ${item.nome}
+                </span>
 
-            <button onclick="marcarComprado(${indice})">
-                ✓
-            </button>
+                <span class="item-quantidade">
+                    x${item.quantidade}
+                </span>
+            </div>
+
+            <div class="item-acoes">
+
+                <button
+                    class="botao-quantidade"
+                    onclick="diminuirQuantidade(${indice})"
+                >
+                    −
+                </button>
+
+                <button
+                    class="botao-quantidade"
+                    onclick="aumentarQuantidade(${indice})"
+                >
+                    +
+                </button>
+
+                <button
+                    class="botao-comprado"
+                    onclick="marcarComprado(${indice})"
+                >
+                    ✓
+                </button>
+
+            </div>
         `;
 
         lista.appendChild(linha);
     });
 }
 
+
 function adicionarItem(nome) {
     nome = nome.trim();
 
     const existente = itens.find(
-        item => item.nome.toLowerCase() === nome.toLowerCase()
+        item =>
+            item.nome.toLowerCase() ===
+            nome.toLowerCase()
     );
 
     if (existente) {
@@ -65,12 +122,54 @@ function adicionarItem(nome) {
     atualizarLista();
 }
 
+
+function aumentarQuantidade(indice) {
+    itens[indice].quantidade++;
+
+    salvarDados();
+    atualizarLista();
+}
+
+
+function diminuirQuantidade(indice) {
+    itens[indice].quantidade--;
+
+    if (itens[indice].quantidade <= 0) {
+        itens.splice(indice, 1);
+    }
+
+    salvarDados();
+    atualizarLista();
+}
+
+
 function marcarComprado(indice) {
     itens.splice(indice, 1);
 
     salvarDados();
     atualizarLista();
 }
+
+
+function limparLista() {
+    if (itens.length === 0) {
+        return;
+    }
+
+    const confirmar = confirm(
+        "Limpar toda a lista de compras?"
+    );
+
+    if (!confirmar) {
+        return;
+    }
+
+    itens = [];
+
+    salvarDados();
+    atualizarLista();
+}
+
 
 botaoAdicionar.addEventListener("click", () => {
     const nome = prompt("Nome do produto:");
@@ -81,6 +180,10 @@ botaoAdicionar.addEventListener("click", () => {
 
     adicionarItem(nome);
 });
+
+
+botaoLimpar.addEventListener("click", limparLista);
+
 
 carregarDados();
 atualizarLista();

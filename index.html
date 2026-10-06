@@ -9,7 +9,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>KIJK Pantry V0.6</title>
+    <title>KIJK Pantry V0.7</title>
 
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
@@ -21,25 +21,64 @@
 
     <main class="app">
 
-        <h1>KIJK Pantry</h1>
+        <header class="topo">
 
-        <p class="subtitle">
-            Despensa inteligente
-        </p>
+            <div>
+                <h1>KIJK Pantry</h1>
+
+                <p class="subtitle">
+                    Despensa inteligente
+                </p>
+            </div>
+
+            <div class="contador-box">
+                <span id="contador">0</span>
+                <small>itens</small>
+            </div>
+
+        </header>
+
 
         <section class="card">
 
-            <h2>Lista de compras</h2>
+            <div class="card-topo">
+
+                <h2>
+                    Lista de compras
+                </h2>
+
+                <button
+                    id="botaoLimpar"
+                    class="botao-limpar"
+                >
+                    Limpar
+                </button>
+
+            </div>
+
 
             <div id="lista">
-                <p>Lista vazia.</p>
+
+                <div class="lista-vazia">
+                    <p>Sua lista está vazia.</p>
+                </div>
+
             </div>
 
         </section>
 
-        <button id="botaoAdicionar">
-            + Adicionar item
+
+        <button
+            id="botaoAdicionar"
+            class="botao-adicionar"
+        >
+            + Adicionar produto
         </button>
+
+
+        <p class="versao">
+            KIJK Pantry V0.7
+        </p>
 
     </main>
 
@@ -48,9 +87,6 @@
 
 
     <script>
-        // Durante o desenvolvimento, remove service workers antigos
-        // e limpa caches para evitar carregar versões velhas do app.
-
         if ("serviceWorker" in navigator) {
             navigator.serviceWorker
                 .getRegistrations()
@@ -62,7 +98,6 @@
 
                 });
         }
-
 
         if ("caches" in window) {
             caches.keys().then(names => {
