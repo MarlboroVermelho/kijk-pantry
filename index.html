@@ -9,7 +9,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>KIJK Pantry V0.7</title>
+    <title>KIJK Pantry V0.8</title>
 
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
@@ -68,16 +68,46 @@
         </section>
 
 
+        <div class="acoes-principais">
+
+            <button
+                id="botaoCodigo"
+                class="botao-principal"
+            >
+                📦 Adicionar por código
+            </button>
+
+            <button
+                id="botaoAdicionar"
+                class="botao-secundario"
+            >
+                + Adicionar manualmente
+            </button>
+
+        </div>
+
+
         <button
-            id="botaoAdicionar"
-            class="botao-adicionar"
+            id="botaoProdutos"
+            class="botao-produtos"
         >
-            + Adicionar produto
+            Produtos cadastrados
         </button>
 
 
+        <section class="card produtos-card oculto">
+
+            <h2>
+                Produtos cadastrados
+            </h2>
+
+            <div id="produtosBox"></div>
+
+        </section>
+
+
         <p class="versao">
-            KIJK Pantry V0.7
+            KIJK Pantry V0.8
         </p>
 
     </main>

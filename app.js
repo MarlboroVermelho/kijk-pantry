@@ -1,31 +1,55 @@
-const VERSAO = "0.7";
-const CHAVE = "kijkPantryLista";
+const VERSAO = "0.8";
+
+const CHAVE_LISTA = "kijkPantryLista";
+const CHAVE_PRODUTOS = "kijkPantryProdutos";
 
 const botaoAdicionar = document.getElementById("botaoAdicionar");
+const botaoCodigo = document.getElementById("botaoCodigo");
+const botaoProdutos = document.getElementById("botaoProdutos");
 const botaoLimpar = document.getElementById("botaoLimpar");
+
 const lista = document.getElementById("lista");
 const contador = document.getElementById("contador");
+const produtosBox = document.getElementById("produtosBox");
 
 let itens = [];
+let produtos = [];
 
 
 function carregarDados() {
-    const salvo = localStorage.getItem(CHAVE);
+    try {
+        const listaSalva = localStorage.getItem(CHAVE_LISTA);
+        const produtosSalvos = localStorage.getItem(CHAVE_PRODUTOS);
 
-    if (salvo) {
-        try {
-            itens = JSON.parse(salvo);
-        } catch {
-            itens = [];
-        }
+        itens = listaSalva
+            ? JSON.parse(listaSalva)
+            : [];
+
+        produtos = produtosSalvos
+            ? JSON.parse(produtosSalvos)
+            : [];
+
+    } catch (erro) {
+        console.error("Erro ao carregar dados:", erro);
+
+        itens = [];
+        produtos = [];
     }
 }
 
 
-function salvarDados() {
+function salvarLista() {
     localStorage.setItem(
-        CHAVE,
+        CHAVE_LISTA,
         JSON.stringify(itens)
+    );
+}
+
+
+function salvarProdutos() {
+    localStorage.setItem(
+        CHAVE_PRODUTOS,
+        JSON.stringify(produtos)
     );
 }
 
@@ -100,6 +124,39 @@ function atualizarLista() {
 }
 
 
+function atualizarProdutos() {
+    produtosBox.innerHTML = "";
+
+    if (produtos.length === 0) {
+        produtosBox.innerHTML = `
+            <p class="lista-vazia">
+                Nenhum produto cadastrado.
+            </p>
+        `;
+
+        return;
+    }
+
+    produtos.forEach(produto => {
+        const linha = document.createElement("div");
+
+        linha.className = "produto-cadastrado";
+
+        linha.innerHTML = `
+            <span class="produto-nome">
+                ${produto.nome}
+            </span>
+
+            <span class="produto-ean">
+                ${produto.ean}
+            </span>
+        `;
+
+        produtosBox.appendChild(linha);
+    });
+}
+
+
 function adicionarItem(nome) {
     nome = nome.trim();
 
@@ -118,7 +175,7 @@ function adicionarItem(nome) {
         });
     }
 
-    salvarDados();
+    salvarLista();
     atualizarLista();
 }
 
@@ -126,7 +183,7 @@ function adicionarItem(nome) {
 function aumentarQuantidade(indice) {
     itens[indice].quantidade++;
 
-    salvarDados();
+    salvarLista();
     atualizarLista();
 }
 
@@ -138,7 +195,7 @@ function diminuirQuantidade(indice) {
         itens.splice(indice, 1);
     }
 
-    salvarDados();
+    salvarLista();
     atualizarLista();
 }
 
@@ -146,7 +203,7 @@ function diminuirQuantidade(indice) {
 function marcarComprado(indice) {
     itens.splice(indice, 1);
 
-    salvarDados();
+    salvarLista();
     atualizarLista();
 }
 
@@ -166,26 +223,142 @@ function limparLista() {
 
     itens = [];
 
-    salvarDados();
+    salvarLista();
     atualizarLista();
 }
 
 
-botaoAdicionar.addEventListener("click", () => {
-    const nome = prompt("Nome do produto:");
+function buscarProdutoPorEAN(ean) {
+    return produtos.find(
+        produto => produto.ean === ean
+    );
+}
+
+
+function cadastrarProduto(ean, nome) {
+    produtos.push({
+        ean: ean,
+        nome: nome
+    });
+
+    salvarProdutos();
+    atualizarProdutos();
+}
+
+
+function adicionarPorCodigo() {
+    const ean = prompt(
+        "Digite o código de barras (EAN):"
+    );
+
+    if (!ean || !ean.trim()) {
+        return;
+    }
+
+    const codigo = ean.trim();
+
+    const produto = buscarProdutoPorEAN(codigo);
+
+    if (produto) {
+        adicionarItem(produto.nome);
+
+        alert(
+            `${produto.nome} adicionado à lista.`
+        );
+
+        return;
+    }
+
+    const nome = prompt(
+        "Produto não cadastrado.\n\nDigite o nome do produto:"
+    );
 
     if (!nome || !nome.trim()) {
         return;
     }
 
-    adicionarItem(nome);
-});
+    cadastrarProduto(
+        codigo,
+        nome.trim()
+    );
+
+    adicionarItem(
+        nome.trim()
+    );
+
+    alert(
+        `${nome.trim()} cadastrado e adicionado à lista.`
+    );
+}
 
 
-botaoLimpar.addEventListener("click", limparLista);
+function adicionarManualmente() {
+    const nome = prompt(
+        "Nome do produto:"
+    );
+
+    if (!nome || !nome.trim()) {
+        return;
+    }
+
+    adicionarItem(
+        nome.trim()
+    );
+}
+
+
+function alternarProdutos() {
+    const estaOculto =
+        produtosBox.parentElement.classList.contains(
+            "oculto"
+        );
+
+    if (estaOculto) {
+        produtosBox.parentElement.classList.remove(
+            "oculto"
+        );
+
+        botaoProdutos.textContent =
+            "Ocultar produtos";
+
+        atualizarProdutos();
+
+    } else {
+        produtosBox.parentElement.classList.add(
+            "oculto"
+        );
+
+        botaoProdutos.textContent =
+            "Produtos cadastrados";
+    }
+}
+
+
+botaoAdicionar.addEventListener(
+    "click",
+    adicionarManualmente
+);
+
+botaoCodigo.addEventListener(
+    "click",
+    adicionarPorCodigo
+);
+
+botaoProdutos.addEventListener(
+    "click",
+    alternarProdutos
+);
+
+botaoLimpar.addEventListener(
+    "click",
+    limparLista
+);
 
 
 carregarDados();
-atualizarLista();
 
-document.title = `KIJK Pantry V${VERSAO}`;
+atualizarLista();
+atualizarProdutos();
+
+document.title =
+    `KIJK Pantry V${VERSAO}`;
