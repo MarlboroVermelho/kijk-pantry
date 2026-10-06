@@ -9,7 +9,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>KIJK Pantry V0.9</title>
+    <title>KIJK Pantry V1.0</title>
 
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
@@ -53,9 +53,11 @@
             </div>
 
             <div id="lista">
+
                 <div class="estado-vazio">
                     Nenhum item na lista
                 </div>
+
             </div>
 
         </section>
@@ -68,30 +70,40 @@
                 class="botao destaque"
             >
                 <span class="icone">▦</span>
-                <span>Escanear código</span>
+                Escanear produto
             </button>
 
 
-            <button
-                id="botaoCodigo"
-                class="botao"
-            >
-                Digitar código
-            </button>
+            <div class="acoes-menores">
+
+                <button
+                    id="botaoCodigo"
+                    class="botao"
+                >
+                    Digitar código
+                </button>
+
+                <button
+                    id="botaoAdicionar"
+                    class="botao"
+                >
+                    + Manual
+                </button>
+
+            </div>
 
 
             <button
-                id="botaoAdicionar"
-                class="botao"
+                id="botaoHistorico"
+                class="botao menu"
             >
-                <span class="icone">+</span>
-                <span>Adicionar manualmente</span>
+                Histórico
             </button>
 
 
             <button
                 id="botaoProdutos"
-                class="botao discreto"
+                class="botao menu"
             >
                 Produtos cadastrados
             </button>
@@ -100,8 +112,32 @@
 
 
         <section
+            id="areaHistorico"
+            class="card painel-extra"
+            hidden
+        >
+
+            <div class="card-cabecalho">
+
+                <h2>Histórico</h2>
+
+                <button
+                    id="botaoLimparHistorico"
+                    class="limpar"
+                >
+                    Limpar
+                </button>
+
+            </div>
+
+            <div id="historicoBox"></div>
+
+        </section>
+
+
+        <section
             id="areaProdutos"
-            class="card produtos"
+            class="card painel-extra"
             hidden
         >
 
@@ -113,13 +149,11 @@
 
 
         <footer>
-            KIJK Pantry V0.9
+            KIJK Pantry V1.0
         </footer>
 
     </main>
 
-
-    <!-- SCANNER -->
 
     <div
         id="scannerModal"
@@ -132,14 +166,14 @@
             <h2>Escanear produto</h2>
 
             <p>
-                Posicione o código de barras dentro da câmera.
+                Posicione o código de barras na área abaixo.
             </p>
 
             <div id="reader"></div>
 
             <button
                 id="botaoFecharScanner"
-                class="botao fechar-scanner"
+                class="botao cancelar"
             >
                 Cancelar
             </button>
@@ -149,6 +183,13 @@
     </div>
 
 
+    <div
+        id="toast"
+        class="toast"
+        hidden
+    ></div>
+
+
     <script
         src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"
     ></script>
@@ -156,28 +197,41 @@
     <script src="app.js"></script>
 
 
-    <!-- Mantemos cache/service worker desligado enquanto desenvolvemos -->
+    <!--
+        Durante o desenvolvimento continuamos sem
+        Service Worker/cache para evitar versões antigas.
+    -->
 
     <script>
+
         if ("serviceWorker" in navigator) {
+
             navigator.serviceWorker
                 .getRegistrations()
                 .then(registrations => {
+
                     registrations.forEach(
                         registration =>
                             registration.unregister()
                     );
+
                 });
         }
 
+
         if ("caches" in window) {
+
             caches.keys().then(names => {
+
                 names.forEach(
                     name => caches.delete(name)
                 );
+
             });
         }
+
     </script>
 
 </body>
+
 </html>

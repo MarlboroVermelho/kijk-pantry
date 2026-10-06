@@ -1,13 +1,16 @@
-const VERSAO = "0.9";
+const VERSAO = "1.0";
 
 const CHAVE_LISTA = "kijkPantryLista";
 const CHAVE_PRODUTOS = "kijkPantryProdutos";
+const CHAVE_HISTORICO = "kijkPantryHistorico";
 
 let itens = [];
 let produtos = [];
+let historico = [];
 
 let scanner = null;
 let scannerAtivo = false;
+let leituraEmAndamento = false;
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -30,14 +33,26 @@ document.addEventListener("DOMContentLoaded", () => {
     const botaoProdutos =
         document.getElementById("botaoProdutos");
 
+    const botaoHistorico =
+        document.getElementById("botaoHistorico");
+
     const botaoLimpar =
         document.getElementById("botaoLimpar");
+
+    const botaoLimparHistorico =
+        document.getElementById("botaoLimparHistorico");
 
     const areaProdutos =
         document.getElementById("areaProdutos");
 
+    const areaHistorico =
+        document.getElementById("areaHistorico");
+
     const produtosBox =
         document.getElementById("produtosBox");
+
+    const historicoBox =
+        document.getElementById("historicoBox");
 
     const scannerModal =
         document.getElementById("scannerModal");
@@ -45,28 +60,32 @@ document.addEventListener("DOMContentLoaded", () => {
     const botaoFecharScanner =
         document.getElementById("botaoFecharScanner");
 
+    const toast =
+        document.getElementById("toast");
 
-    // ==========================
-    // DADOS
-    // ==========================
+
+    // ==========================================
+    // ARMAZENAMENTO
+    // ==========================================
 
     function carregarDados() {
 
         try {
 
-            const listaSalva =
-                localStorage.getItem(CHAVE_LISTA);
+            itens =
+                JSON.parse(
+                    localStorage.getItem(CHAVE_LISTA)
+                ) || [];
 
-            const produtosSalvos =
-                localStorage.getItem(CHAVE_PRODUTOS);
+            produtos =
+                JSON.parse(
+                    localStorage.getItem(CHAVE_PRODUTOS)
+                ) || [];
 
-            itens = listaSalva
-                ? JSON.parse(listaSalva)
-                : [];
-
-            produtos = produtosSalvos
-                ? JSON.parse(produtosSalvos)
-                : [];
+            historico =
+                JSON.parse(
+                    localStorage.getItem(CHAVE_HISTORICO)
+                ) || [];
 
         } catch (erro) {
 
@@ -77,6 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             itens = [];
             produtos = [];
+            historico = [];
         }
     }
 
@@ -99,9 +119,171 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    // ==========================
+    function salvarHistorico() {
+
+        localStorage.setItem(
+            CHAVE_HISTORICO,
+            JSON.stringify(historico)
+        );
+    }
+
+
+    // ==========================================
+    // MENSAGENS
+    // ==========================================
+
+    let timerToast;
+
+
+    function mostrarMensagem(texto) {
+
+        clearTimeout(timerToast);
+
+        toast.textContent = texto;
+        toast.hidden = false;
+
+        timerToast = setTimeout(() => {
+
+            toast.hidden = true;
+
+        }, 2300);
+    }
+
+
+    // ==========================================
+    // HISTÓRICO
+    // ==========================================
+
+    function registrarEvento(
+        tipo,
+        nome,
+        ean = null,
+        quantidade = 1
+    ) {
+
+        historico.push({
+
+            id: Date.now(),
+
+            tipo: tipo,
+
+            nome: nome,
+
+            ean: ean,
+
+            quantidade: quantidade,
+
+            data: new Date().toISOString()
+        });
+
+
+        salvarHistorico();
+        atualizarHistorico();
+    }
+
+
+    function formatarData(dataISO) {
+
+        const data =
+            new Date(dataISO);
+
+        return data.toLocaleString(
+            "pt-BR",
+            {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+            }
+        );
+    }
+
+
+    function atualizarHistorico() {
+
+        historicoBox.innerHTML = "";
+
+
+        if (historico.length === 0) {
+
+            historicoBox.innerHTML = `
+                <div class="estado-vazio">
+                    Nenhum evento registrado
+                </div>
+            `;
+
+            return;
+        }
+
+
+        const eventos =
+            [...historico].reverse();
+
+
+        eventos.forEach(evento => {
+
+            const linha =
+                document.createElement("div");
+
+            linha.className =
+                "evento-historico";
+
+
+            const classeTipo =
+                evento.tipo === "acabou"
+                    ? "acabou"
+                    : "comprado";
+
+
+            const textoTipo =
+                evento.tipo === "acabou"
+                    ? "ACABOU"
+                    : "COMPRADO";
+
+
+            linha.innerHTML = `
+
+                <div class="evento-principal">
+
+                    <span
+                        class="evento-tipo ${classeTipo}"
+                    >
+                        ${textoTipo}
+                    </span>
+
+                    <strong>
+                        ${evento.nome}
+                    </strong>
+
+                    ${
+                        evento.quantidade > 1
+                        ? `<span class="evento-quantidade">
+                               x${evento.quantidade}
+                           </span>`
+                        : ""
+                    }
+
+                </div>
+
+
+                <div class="evento-data">
+                    ${formatarData(evento.data)}
+                </div>
+
+            `;
+
+
+            historicoBox.appendChild(
+                linha
+            );
+        });
+    }
+
+
+    // ==========================================
     // LISTA
-    // ==========================
+    // ==========================================
 
     function totalItens() {
 
@@ -120,6 +302,7 @@ document.addEventListener("DOMContentLoaded", () => {
         contador.textContent =
             totalItens();
 
+
         if (itens.length === 0) {
 
             lista.innerHTML = `
@@ -131,6 +314,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+
         itens.forEach((item, indice) => {
 
             const linha =
@@ -138,7 +322,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
             linha.className = "item";
 
+
             linha.innerHTML = `
+
                 <div class="item-dados">
 
                     <span class="item-nome">
@@ -150,6 +336,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     </span>
 
                 </div>
+
 
                 <div class="item-acoes">
 
@@ -178,16 +365,23 @@ document.addEventListener("DOMContentLoaded", () => {
                     </button>
 
                 </div>
+
             `;
+
 
             lista.appendChild(linha);
         });
     }
 
 
-    function adicionarItem(nome) {
+    function adicionarItem(
+        nome,
+        ean = null,
+        registrar = true
+    ) {
 
         nome = nome.trim();
+
 
         const existente =
             itens.find(
@@ -196,19 +390,42 @@ document.addEventListener("DOMContentLoaded", () => {
                     nome.toLowerCase()
             );
 
+
         if (existente) {
 
             existente.quantidade++;
 
+            if (!existente.ean && ean) {
+                existente.ean = ean;
+            }
+
         } else {
 
             itens.push({
+
                 nome: nome,
-                quantidade: 1
+
+                quantidade: 1,
+
+                ean: ean
             });
         }
 
+
         salvarLista();
+
+
+        if (registrar) {
+
+            registrarEvento(
+                "acabou",
+                nome,
+                ean,
+                1
+            );
+        }
+
+
         atualizarLista();
     }
 
@@ -222,9 +439,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     "[data-acao]"
                 );
 
+
             if (!botao) {
                 return;
             }
+
 
             const indice =
                 Number(
@@ -234,17 +453,26 @@ document.addEventListener("DOMContentLoaded", () => {
             const acao =
                 botao.dataset.acao;
 
-            if (acao === "mais") {
-                itens[indice].quantidade++;
+            const item =
+                itens[indice];
+
+
+            if (!item) {
+                return;
             }
+
+
+            if (acao === "mais") {
+
+                item.quantidade++;
+            }
+
 
             if (acao === "menos") {
 
-                itens[indice].quantidade--;
+                item.quantidade--;
 
-                if (
-                    itens[indice].quantidade <= 0
-                ) {
+                if (item.quantidade <= 0) {
 
                     itens.splice(
                         indice,
@@ -253,13 +481,28 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
 
+
             if (acao === "comprado") {
+
+                registrarEvento(
+                    "comprado",
+                    item.nome,
+                    item.ean || null,
+                    item.quantidade
+                );
+
 
                 itens.splice(
                     indice,
                     1
                 );
+
+
+                mostrarMensagem(
+                    `${item.nome} marcado como comprado`
+                );
             }
+
 
             salvarLista();
             atualizarLista();
@@ -267,9 +510,9 @@ document.addEventListener("DOMContentLoaded", () => {
     );
 
 
-    // ==========================
-    // PRODUTOS / EAN
-    // ==========================
+    // ==========================================
+    // PRODUTOS
+    // ==========================================
 
     function buscarProdutoPorEAN(ean) {
 
@@ -280,85 +523,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    function processarEAN(ean) {
-
-        ean =
-            String(ean)
-                .replace(/\D/g, "");
-
-        if (!ean) {
-
-            alert(
-                "Código inválido."
-            );
-
-            return;
-        }
-
-        const produto =
-            buscarProdutoPorEAN(ean);
-
-        if (produto) {
-
-            adicionarItem(
-                produto.nome
-            );
-
-            alert(
-                `${produto.nome} adicionado à lista.`
-            );
-
-            return;
-        }
-
-        const nome = prompt(
-            `Código ${ean} ainda não cadastrado.\n\nNome do produto:`
-        );
-
-        if (
-            !nome ||
-            !nome.trim()
-        ) {
-            return;
-        }
-
-        produtos.push({
-            ean: ean,
-            nome: nome.trim()
-        });
-
-        salvarProdutos();
-        atualizarProdutos();
-
-        adicionarItem(
-            nome.trim()
-        );
-
-        alert(
-            `${nome.trim()} cadastrado e adicionado.`
-        );
-    }
-
-
-    function adicionarPorCodigo() {
-
-        const entrada = prompt(
-            "Digite o código de barras (EAN):"
-        );
-
-        if (!entrada) {
-            return;
-        }
-
-        processarEAN(
-            entrada
-        );
-    }
-
-
     function atualizarProdutos() {
 
         produtosBox.innerHTML = "";
+
 
         if (produtos.length === 0) {
 
@@ -371,6 +539,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+
         produtos.forEach(produto => {
 
             const linha =
@@ -379,7 +548,9 @@ document.addEventListener("DOMContentLoaded", () => {
             linha.className =
                 "produto-cadastrado";
 
+
             linha.innerHTML = `
+
                 <strong>
                     ${produto.nome}
                 </strong>
@@ -387,7 +558,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 <span>
                     EAN ${produto.ean}
                 </span>
+
             `;
+
 
             produtosBox.appendChild(
                 linha
@@ -396,9 +569,106 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    // ==========================
+    function processarEAN(ean) {
+
+        ean =
+            String(ean)
+                .replace(/\D/g, "");
+
+
+        if (!ean) {
+
+            mostrarMensagem(
+                "Código inválido"
+            );
+
+            return;
+        }
+
+
+        const produto =
+            buscarProdutoPorEAN(ean);
+
+
+        if (produto) {
+
+            adicionarItem(
+                produto.nome,
+                ean
+            );
+
+
+            mostrarMensagem(
+                `${produto.nome} adicionado`
+            );
+
+            return;
+        }
+
+
+        const nome = prompt(
+            `Produto ainda não cadastrado.\n\nEAN: ${ean}\n\nNome do produto:`
+        );
+
+
+        if (
+            !nome ||
+            !nome.trim()
+        ) {
+
+            return;
+        }
+
+
+        const nomeLimpo =
+            nome.trim();
+
+
+        produtos.push({
+
+            ean: ean,
+
+            nome: nomeLimpo
+        });
+
+
+        salvarProdutos();
+        atualizarProdutos();
+
+
+        adicionarItem(
+            nomeLimpo,
+            ean
+        );
+
+
+        mostrarMensagem(
+            `${nomeLimpo} cadastrado e adicionado`
+        );
+    }
+
+
+    function adicionarPorCodigo() {
+
+        const entrada = prompt(
+            "Digite o código de barras:"
+        );
+
+
+        if (!entrada) {
+            return;
+        }
+
+
+        processarEAN(
+            entrada
+        );
+    }
+
+
+    // ==========================================
     // SCANNER
-    // ==========================
+    // ==========================================
 
     async function abrirScanner() {
 
@@ -414,14 +684,20 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+
         scannerModal.hidden = false;
+
+        leituraEmAndamento = false;
+
 
         scanner =
             new Html5Qrcode(
                 "reader"
             );
 
+
         const configuracao = {
+
             fps: 10,
 
             qrbox: {
@@ -430,11 +706,14 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         };
 
+
         try {
 
             scannerAtivo = true;
 
+
             await scanner.start(
+
                 {
                     facingMode:
                         "environment"
@@ -444,13 +723,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 async decodedText => {
 
-                    if (!scannerAtivo) {
+                    if (
+                        leituraEmAndamento
+                    ) {
                         return;
                     }
 
-                    scannerAtivo = false;
+
+                    leituraEmAndamento =
+                        true;
+
+
+                    if (
+                        navigator.vibrate
+                    ) {
+
+                        navigator.vibrate(
+                            120
+                        );
+                    }
+
 
                     await fecharScanner();
+
 
                     processarEAN(
                         decodedText
@@ -458,8 +753,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 },
 
                 () => {
-                    // Ignora frames sem código.
+                    // Frame sem código.
                 }
+
             );
 
         } catch (erro) {
@@ -469,13 +765,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 erro
             );
 
+
             scannerAtivo = false;
 
             scannerModal.hidden =
                 true;
 
+
             alert(
-                "Não foi possível abrir a câmera.\n\nVerifique a permissão de câmera do KIJK Pantry."
+                "Não foi possível abrir a câmera."
             );
         }
     }
@@ -500,26 +798,32 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
+
         scannerAtivo = false;
+
 
         if (scanner) {
 
             try {
+
                 scanner.clear();
+
             } catch {
-                // Ignora
+                // Ignora.
             }
         }
 
+
         scanner = null;
 
-        scannerModal.hidden = true;
+        scannerModal.hidden =
+            true;
     }
 
 
-    // ==========================
-    // OUTROS BOTÕES
-    // ==========================
+    // ==========================================
+    // OUTROS CONTROLES
+    // ==========================================
 
     function adicionarManualmente() {
 
@@ -527,34 +831,77 @@ document.addEventListener("DOMContentLoaded", () => {
             "Nome do produto:"
         );
 
+
         if (
             !nome ||
             !nome.trim()
         ) {
+
             return;
         }
 
+
         adicionarItem(
-            nome
+            nome.trim(),
+            null
         );
     }
 
 
     function alternarProdutos() {
 
-        const oculto =
+        const abrir =
             areaProdutos.hidden;
 
+
         areaProdutos.hidden =
-            !oculto;
+            !abrir;
+
 
         botaoProdutos.textContent =
-            oculto
+            abrir
                 ? "Ocultar produtos cadastrados"
                 : "Produtos cadastrados";
 
-        if (oculto) {
+
+        if (abrir) {
+
             atualizarProdutos();
+
+            areaHistorico.hidden =
+                true;
+
+            botaoHistorico.textContent =
+                "Histórico";
+        }
+    }
+
+
+    function alternarHistorico() {
+
+        const abrir =
+            areaHistorico.hidden;
+
+
+        areaHistorico.hidden =
+            !abrir;
+
+
+        botaoHistorico.textContent =
+            abrir
+                ? "Ocultar histórico"
+                : "Histórico";
+
+
+        if (abrir) {
+
+            atualizarHistorico();
+
+            areaProdutos.hidden =
+                true;
+
+            botaoProdutos.textContent =
+                "Produtos cadastrados";
         }
     }
 
@@ -565,14 +912,17 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+
         const confirmar =
             confirm(
                 "Limpar toda a lista?"
             );
 
+
         if (!confirmar) {
             return;
         }
+
 
         itens = [];
 
@@ -581,34 +931,72 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    // ==========================
+    function limparHistorico() {
+
+        if (
+            historico.length === 0
+        ) {
+            return;
+        }
+
+
+        const confirmar =
+            confirm(
+                "Apagar todo o histórico?"
+            );
+
+
+        if (!confirmar) {
+            return;
+        }
+
+
+        historico = [];
+
+        salvarHistorico();
+        atualizarHistorico();
+    }
+
+
+    // ==========================================
     // EVENTOS
-    // ==========================
+    // ==========================================
 
     botaoAdicionar.addEventListener(
         "click",
         adicionarManualmente
     );
 
+
     botaoCodigo.addEventListener(
         "click",
         adicionarPorCodigo
     );
+
 
     botaoScanner.addEventListener(
         "click",
         abrirScanner
     );
 
+
     botaoFecharScanner.addEventListener(
         "click",
         fecharScanner
     );
 
+
     botaoProdutos.addEventListener(
         "click",
         alternarProdutos
     );
+
+
+    botaoHistorico.addEventListener(
+        "click",
+        alternarHistorico
+    );
+
 
     botaoLimpar.addEventListener(
         "click",
@@ -616,13 +1004,20 @@ document.addEventListener("DOMContentLoaded", () => {
     );
 
 
-    // ==========================
-    // INÍCIO
-    // ==========================
+    botaoLimparHistorico.addEventListener(
+        "click",
+        limparHistorico
+    );
+
+
+    // ==========================================
+    // INICIALIZAÇÃO
+    // ==========================================
 
     carregarDados();
 
     atualizarLista();
     atualizarProdutos();
+    atualizarHistorico();
 
 });
