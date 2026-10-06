@@ -60,11 +60,9 @@ document.addEventListener("DOMContentLoaded", () => {
             const produtosSalvos =
                 localStorage.getItem(CHAVE_PRODUTOS);
 
-
             itens = listaSalva
                 ? JSON.parse(listaSalva)
                 : [];
-
 
             produtos = produtosSalvos
                 ? JSON.parse(produtosSalvos)
@@ -122,7 +120,6 @@ document.addEventListener("DOMContentLoaded", () => {
         contador.textContent =
             totalItens();
 
-
         if (itens.length === 0) {
 
             lista.innerHTML = `
@@ -134,14 +131,12 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-
         itens.forEach((item, indice) => {
 
             const linha =
                 document.createElement("div");
 
             linha.className = "item";
-
 
             linha.innerHTML = `
                 <div class="item-dados">
@@ -155,7 +150,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     </span>
 
                 </div>
-
 
                 <div class="item-acoes">
 
@@ -186,7 +180,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
             `;
 
-
             lista.appendChild(linha);
         });
     }
@@ -196,14 +189,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         nome = nome.trim();
 
-
         const existente =
             itens.find(
                 item =>
                     item.nome.toLowerCase() ===
                     nome.toLowerCase()
             );
-
 
         if (existente) {
 
@@ -216,7 +207,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 quantidade: 1
             });
         }
-
 
         salvarLista();
         atualizarLista();
@@ -232,11 +222,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     "[data-acao]"
                 );
 
-
             if (!botao) {
                 return;
             }
-
 
             const indice =
                 Number(
@@ -246,12 +234,9 @@ document.addEventListener("DOMContentLoaded", () => {
             const acao =
                 botao.dataset.acao;
 
-
             if (acao === "mais") {
-
                 itens[indice].quantidade++;
             }
-
 
             if (acao === "menos") {
 
@@ -268,7 +253,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
 
-
             if (acao === "comprado") {
 
                 itens.splice(
@@ -276,7 +260,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     1
                 );
             }
-
 
             salvarLista();
             atualizarLista();
@@ -303,7 +286,6 @@ document.addEventListener("DOMContentLoaded", () => {
             String(ean)
                 .replace(/\D/g, "");
 
-
         if (!ean) {
 
             alert(
@@ -313,10 +295,8 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-
         const produto =
             buscarProdutoPorEAN(ean);
-
 
         if (produto) {
 
@@ -331,35 +311,28 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-
         const nome = prompt(
             `Código ${ean} ainda não cadastrado.\n\nNome do produto:`
         );
-
 
         if (
             !nome ||
             !nome.trim()
         ) {
-
             return;
         }
-
 
         produtos.push({
             ean: ean,
             nome: nome.trim()
         });
 
-
         salvarProdutos();
         atualizarProdutos();
-
 
         adicionarItem(
             nome.trim()
         );
-
 
         alert(
             `${nome.trim()} cadastrado e adicionado.`
@@ -373,11 +346,9 @@ document.addEventListener("DOMContentLoaded", () => {
             "Digite o código de barras (EAN):"
         );
 
-
         if (!entrada) {
             return;
         }
-
 
         processarEAN(
             entrada
@@ -388,7 +359,6 @@ document.addEventListener("DOMContentLoaded", () => {
     function atualizarProdutos() {
 
         produtosBox.innerHTML = "";
-
 
         if (produtos.length === 0) {
 
@@ -401,16 +371,13 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-
         produtos.forEach(produto => {
 
             const linha =
                 document.createElement("div");
 
-
             linha.className =
                 "produto-cadastrado";
-
 
             linha.innerHTML = `
                 <strong>
@@ -421,7 +388,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     EAN ${produto.ean}
                 </span>
             `;
-
 
             produtosBox.appendChild(
                 linha
@@ -436,14 +402,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function abrirScanner() {
 
-        scannerModal.hidden = false;
+        if (
+            typeof Html5Qrcode ===
+            "undefined"
+        ) {
 
+            alert(
+                "O leitor de código de barras não foi carregado."
+            );
+
+            return;
+        }
+
+        scannerModal.hidden = false;
 
         scanner =
             new Html5Qrcode(
                 "reader"
             );
-
 
         const configuracao = {
             fps: 10,
@@ -454,11 +430,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         };
 
-
         try {
 
             scannerAtivo = true;
-
 
             await scanner.start(
                 {
@@ -474,12 +448,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         return;
                     }
 
-
                     scannerAtivo = false;
 
-
                     await fecharScanner();
-
 
                     processarEAN(
                         decodedText
@@ -498,12 +469,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 erro
             );
 
-
             scannerAtivo = false;
 
             scannerModal.hidden =
                 true;
-
 
             alert(
                 "Não foi possível abrir a câmera.\n\nVerifique a permissão de câmera do KIJK Pantry."
@@ -531,9 +500,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-
         scannerAtivo = false;
-
 
         if (scanner) {
 
@@ -543,7 +510,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Ignora
             }
         }
-
 
         scanner = null;
 
@@ -561,15 +527,12 @@ document.addEventListener("DOMContentLoaded", () => {
             "Nome do produto:"
         );
 
-
         if (
             !nome ||
             !nome.trim()
         ) {
-
             return;
         }
-
 
         adicionarItem(
             nome
@@ -582,16 +545,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const oculto =
             areaProdutos.hidden;
 
-
         areaProdutos.hidden =
             !oculto;
-
 
         botaoProdutos.textContent =
             oculto
                 ? "Ocultar produtos cadastrados"
                 : "Produtos cadastrados";
-
 
         if (oculto) {
             atualizarProdutos();
@@ -605,17 +565,14 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-
         const confirmar =
             confirm(
                 "Limpar toda a lista?"
             );
 
-
         if (!confirmar) {
             return;
         }
-
 
         itens = [];
 
@@ -624,35 +581,34 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
+    // ==========================
+    // EVENTOS
+    // ==========================
+
     botaoAdicionar.addEventListener(
         "click",
         adicionarManualmente
     );
-
 
     botaoCodigo.addEventListener(
         "click",
         adicionarPorCodigo
     );
 
-
     botaoScanner.addEventListener(
         "click",
         abrirScanner
     );
-
 
     botaoFecharScanner.addEventListener(
         "click",
         fecharScanner
     );
 
-
     botaoProdutos.addEventListener(
         "click",
         alternarProdutos
     );
-
 
     botaoLimpar.addEventListener(
         "click",
