@@ -9,7 +9,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>KIJK Pantry V1.2</title>
+    <title>KIJK Pantry V1.3</title>
 
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
@@ -20,6 +20,8 @@
 <body>
 
     <main class="app">
+
+        <!-- TOPO -->
 
         <header class="topo">
 
@@ -36,7 +38,7 @@
         </header>
 
 
-        <!-- LISTA -->
+        <!-- LISTA DE COMPRAS -->
 
         <section class="card">
 
@@ -72,6 +74,7 @@
 
                 <div>
                     <h2>Próximos a acabar</h2>
+
                     <p class="subtitulo-card">
                         Baseado no seu histórico
                     </p>
@@ -191,7 +194,36 @@
             hidden
         >
 
-            <h2>Produtos cadastrados</h2>
+            <div class="produtos-cabecalho">
+
+                <div>
+                    <h2>Produtos cadastrados</h2>
+
+                    <p class="subtitulo-card">
+                        Gerencie os produtos conhecidos pelo Pantry
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="busca-produtos">
+
+                <input
+                    id="buscaProdutos"
+                    type="search"
+                    placeholder="Buscar produto ou EAN"
+                    autocomplete="off"
+                >
+
+            </div>
+
+
+            <div
+                id="contadorProdutos"
+                class="contador-produtos"
+            ></div>
+
 
             <div id="produtosBox"></div>
 
@@ -199,7 +231,7 @@
 
 
         <footer>
-            KIJK Pantry V1.2
+            KIJK Pantry V1.3
         </footer>
 
     </main>
@@ -235,7 +267,7 @@
     </div>
 
 
-    <!-- MENSAGEM -->
+    <!-- TOAST -->
 
     <div
         id="toast"
@@ -256,20 +288,28 @@
     <script>
 
         if ("serviceWorker" in navigator) {
+
             navigator.serviceWorker
                 .getRegistrations()
                 .then(registrations => {
+
                     registrations.forEach(
-                        registration => registration.unregister()
+                        registration =>
+                            registration.unregister()
                     );
+
                 });
         }
 
+
         if ("caches" in window) {
+
             caches.keys().then(names => {
+
                 names.forEach(
                     name => caches.delete(name)
                 );
+
             });
         }
 

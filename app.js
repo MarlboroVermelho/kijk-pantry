@@ -1,4 +1,4 @@
-const VERSAO = "1.2";
+const VERSAO = "1.3";
 
 const CHAVE_LISTA = "kijkPantryLista";
 const CHAVE_PRODUTOS = "kijkPantryProdutos";
@@ -15,11 +15,12 @@ let leituraEmAndamento = false;
 let timerToast = null;
 
 
-// ==========================================
+// ==================================================
 // INICIALIZAÇÃO
-// ==========================================
+// ==================================================
 
 document.addEventListener("DOMContentLoaded", () => {
+
     carregarDados();
 
     atualizarLista();
@@ -32,21 +33,23 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-// ==========================================
+// ==================================================
 // ELEMENTOS
-// ==========================================
+// ==================================================
 
 function el(id) {
     return document.getElementById(id);
 }
 
 
-// ==========================================
+// ==================================================
 // ARMAZENAMENTO
-// ==========================================
+// ==================================================
 
 function carregarDados() {
+
     try {
+
         itens =
             JSON.parse(
                 localStorage.getItem(CHAVE_LISTA)
@@ -63,7 +66,11 @@ function carregarDados() {
             ) || [];
 
     } catch (erro) {
-        console.error("Erro ao carregar dados:", erro);
+
+        console.error(
+            "Erro ao carregar dados:",
+            erro
+        );
 
         itens = [];
         produtos = [];
@@ -73,6 +80,7 @@ function carregarDados() {
 
 
 function salvarLista() {
+
     localStorage.setItem(
         CHAVE_LISTA,
         JSON.stringify(itens)
@@ -81,6 +89,7 @@ function salvarLista() {
 
 
 function salvarProdutos() {
+
     localStorage.setItem(
         CHAVE_PRODUTOS,
         JSON.stringify(produtos)
@@ -89,6 +98,7 @@ function salvarProdutos() {
 
 
 function salvarHistorico() {
+
     localStorage.setItem(
         CHAVE_HISTORICO,
         JSON.stringify(historico)
@@ -96,29 +106,42 @@ function salvarHistorico() {
 }
 
 
-// ==========================================
+// ==================================================
 // MENSAGENS
-// ==========================================
+// ==================================================
 
 function mostrarMensagem(texto) {
-    const toast = el("toast");
 
-    if (!toast) return;
+    const toast =
+        el("toast");
+
+    if (!toast) {
+        return;
+    }
+
 
     clearTimeout(timerToast);
 
-    toast.textContent = texto;
-    toast.hidden = false;
+    toast.textContent =
+        texto;
 
-    timerToast = setTimeout(() => {
-        toast.hidden = true;
-    }, 2300);
+    toast.hidden =
+        false;
+
+
+    timerToast =
+        setTimeout(() => {
+
+            toast.hidden =
+                true;
+
+        }, 2300);
 }
 
 
-// ==========================================
+// ==================================================
 // HISTÓRICO
-// ==========================================
+// ==================================================
 
 function registrarEvento(
     tipo,
@@ -126,25 +149,37 @@ function registrarEvento(
     ean = null,
     quantidade = 1
 ) {
+
     historico.push({
+
         id: Date.now(),
+
         tipo: tipo,
+
         nome: nome,
+
         ean: ean,
+
         quantidade: quantidade,
+
         data: new Date().toISOString()
     });
+
 
     salvarHistorico();
 
     atualizarHistorico();
     atualizarResumo();
     atualizarPrevisoes();
+    atualizarProdutos();
 }
 
 
 function formatarData(dataISO) {
-    const data = new Date(dataISO);
+
+    const data =
+        new Date(dataISO);
+
 
     return data.toLocaleString(
         "pt-BR",
@@ -159,15 +194,47 @@ function formatarData(dataISO) {
 }
 
 
+function formatarDataCurta(dataISO) {
+
+    if (!dataISO) {
+        return "Sem movimentação";
+    }
+
+
+    const data =
+        new Date(dataISO);
+
+
+    return data.toLocaleDateString(
+        "pt-BR",
+        {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric"
+        }
+    );
+}
+
+
 function atualizarHistorico() {
+
     const historicoBox =
         el("historicoBox");
 
-    if (!historicoBox) return;
 
-    historicoBox.innerHTML = "";
+    if (!historicoBox) {
+        return;
+    }
 
-    if (historico.length === 0) {
+
+    historicoBox.innerHTML =
+        "";
+
+
+    if (
+        historico.length === 0
+    ) {
+
         historicoBox.innerHTML = `
             <div class="estado-vazio">
                 Nenhum evento registrado
@@ -177,27 +244,35 @@ function atualizarHistorico() {
         return;
     }
 
+
     const eventos =
         [...historico].reverse();
 
+
     eventos.forEach(evento => {
+
         const linha =
             document.createElement("div");
 
+
         linha.className =
             "evento-historico";
+
 
         const classeTipo =
             evento.tipo === "acabou"
                 ? "acabou"
                 : "comprado";
 
+
         const textoTipo =
             evento.tipo === "acabou"
                 ? "ACABOU"
                 : "COMPRADO";
 
+
         linha.innerHTML = `
+
             <div class="evento-principal">
 
                 <span
@@ -227,64 +302,102 @@ function atualizarHistorico() {
             </div>
         `;
 
-        historicoBox.appendChild(linha);
+
+        historicoBox.appendChild(
+            linha
+        );
     });
 }
 
 
-// ==========================================
+// ==================================================
 // CÁLCULOS
-// ==========================================
+// ==================================================
 
 function diferencaDias(
     dataInicial,
     dataFinal
 ) {
+
     const inicio =
         new Date(dataInicial);
 
     const fim =
         new Date(dataFinal);
 
+
     return (
         fim - inicio
-    ) / (1000 * 60 * 60 * 24);
+    ) / (
+        1000 *
+        60 *
+        60 *
+        24
+    );
 }
 
 
 function media(valores) {
-    if (valores.length === 0) {
+
+    if (
+        valores.length === 0
+    ) {
+
         return null;
     }
+
 
     return (
         valores.reduce(
             (total, valor) =>
                 total + valor,
             0
-        ) / valores.length
+        ) /
+        valores.length
+    );
+}
+
+
+// ==================================================
+// IDENTIFICAÇÃO DE PRODUTO
+// ==================================================
+
+function mesmoProduto(
+    produto,
+    evento
+) {
+
+    if (
+        produto.ean &&
+        evento.ean
+    ) {
+
+        return (
+            String(produto.ean) ===
+            String(evento.ean)
+        );
+    }
+
+
+    return (
+        String(produto.nome)
+            .toLowerCase() ===
+        String(evento.nome)
+            .toLowerCase()
     );
 }
 
 
 function eventosDoProduto(produto) {
-    return historico
-        .filter(evento => {
-            if (
-                produto.ean &&
-                evento.ean
-            ) {
-                return (
-                    produto.ean ===
-                    evento.ean
-                );
-            }
 
-            return (
-                produto.nome.toLowerCase() ===
-                evento.nome.toLowerCase()
-            );
-        })
+    return historico
+        .filter(
+            evento =>
+                mesmoProduto(
+                    produto,
+                    evento
+                )
+        )
         .sort(
             (a, b) =>
                 new Date(a.data) -
@@ -293,28 +406,38 @@ function eventosDoProduto(produto) {
 }
 
 
+// ==================================================
+// RESUMO DE PRODUTO
+// ==================================================
+
 function calcularResumoProduto(produto) {
+
     const eventos =
         eventosDoProduto(produto);
 
+
     const duracoes = [];
     const reposicoes = [];
+
 
     for (
         let i = 0;
         i < eventos.length - 1;
         i++
     ) {
+
         const atual =
             eventos[i];
 
         const proximo =
             eventos[i + 1];
 
+
         if (
             atual.tipo === "comprado" &&
             proximo.tipo === "acabou"
         ) {
+
             duracoes.push(
                 diferencaDias(
                     atual.data,
@@ -323,10 +446,12 @@ function calcularResumoProduto(produto) {
             );
         }
 
+
         if (
             atual.tipo === "acabou" &&
             proximo.tipo === "comprado"
         ) {
+
             reposicoes.push(
                 diferencaDias(
                     atual.data,
@@ -336,6 +461,7 @@ function calcularResumoProduto(produto) {
         }
     }
 
+
     const ultimoEvento =
         eventos.length
             ? eventos[
@@ -343,7 +469,9 @@ function calcularResumoProduto(produto) {
               ]
             : null;
 
+
     return {
+
         duracaoMedia:
             media(duracoes),
 
@@ -357,24 +485,33 @@ function calcularResumoProduto(produto) {
             reposicoes.length,
 
         ultimoEvento:
-            ultimoEvento
+            ultimoEvento,
+
+        totalEventos:
+            eventos.length
     };
 }
 
 
 function formatarDuracao(dias) {
+
     if (
         dias === null ||
         dias === undefined
     ) {
+
         return "Sem dados suficientes";
     }
 
+
     if (dias < 1) {
+
         const horas =
             dias * 24;
 
+
         if (horas < 1) {
+
             const minutos =
                 Math.max(
                     1,
@@ -383,99 +520,116 @@ function formatarDuracao(dias) {
                     )
                 );
 
+
             return `${minutos} min`;
         }
 
+
         return `${horas.toFixed(1)} h`;
     }
+
 
     return `${dias.toFixed(1)} dias`;
 }
 
 
-// ==========================================
-// LISTA DE TODOS OS PRODUTOS CONHECIDOS
-// ==========================================
+// ==================================================
+// TODOS OS PRODUTOS CONHECIDOS
+// ==================================================
 
 function obterProdutosConhecidos() {
+
     const resultado =
-        produtos.map(produto => ({
-            nome: produto.nome,
-            ean: produto.ean || null
-        }));
+        produtos.map(
+            produto => ({
+                nome:
+                    produto.nome,
+
+                ean:
+                    produto.ean || null
+            })
+        );
+
 
     historico.forEach(evento => {
-        const existe =
-            resultado.find(produto => {
-                if (
-                    produto.ean &&
-                    evento.ean
-                ) {
-                    return (
-                        produto.ean ===
-                        evento.ean
-                    );
-                }
 
-                return (
-                    produto.nome.toLowerCase() ===
-                    evento.nome.toLowerCase()
-                );
-            });
+        const existe =
+            resultado.find(
+                produto =>
+                    mesmoProduto(
+                        produto,
+                        evento
+                    )
+            );
+
 
         if (!existe) {
+
             resultado.push({
-                nome: evento.nome,
-                ean: evento.ean || null
+
+                nome:
+                    evento.nome,
+
+                ean:
+                    evento.ean || null
             });
         }
     });
+
 
     return resultado;
 }
 
 
-// ==========================================
+// ==================================================
 // PREVISÕES
-// ==========================================
+// ==================================================
 
 function calcularPrevisao(produto) {
+
     const resumo =
         calcularResumoProduto(produto);
+
 
     if (
         resumo.duracaoMedia === null ||
         !resumo.ultimoEvento
     ) {
+
         return null;
     }
 
-    /*
-        Só conseguimos prever consumo quando
-        o último evento é uma COMPRA.
-
-        Se o último evento for ACABOU,
-        o produto já está pendente de reposição.
-    */
 
     if (
         resumo.ultimoEvento.tipo !==
         "comprado"
     ) {
+
         return {
-            produto: produto,
-            situacao: "acabou",
-            diasRestantes: 0,
-            dataPrevista: null,
+
+            produto:
+                produto,
+
+            situacao:
+                "acabou",
+
+            diasRestantes:
+                0,
+
+            dataPrevista:
+                null,
+
             duracaoMedia:
                 resumo.duracaoMedia
         };
     }
 
+
     const dataCompra =
         new Date(
             resumo.ultimoEvento.data
         );
+
 
     const milissegundosDuracao =
         resumo.duracaoMedia *
@@ -484,18 +638,22 @@ function calcularPrevisao(produto) {
         60 *
         1000;
 
+
     const dataPrevista =
         new Date(
             dataCompra.getTime() +
             milissegundosDuracao
         );
 
+
     const agora =
         new Date();
 
+
     const diasRestantes =
         (
-            dataPrevista - agora
+            dataPrevista -
+            agora
         ) /
         (
             1000 *
@@ -504,33 +662,50 @@ function calcularPrevisao(produto) {
             24
         );
 
+
     let situacao =
         "normal";
+
 
     const limiteAtencao =
         Math.max(
             1,
-            resumo.duracaoMedia * 0.20
+            resumo.duracaoMedia *
+            0.20
         );
 
-    if (diasRestantes <= 0) {
+
+    if (
+        diasRestantes <= 0
+    ) {
+
         situacao =
             "provavel";
+
     } else if (
         diasRestantes <=
         limiteAtencao
     ) {
+
         situacao =
             "atencao";
     }
 
+
     return {
-        produto: produto,
-        situacao: situacao,
+
+        produto:
+            produto,
+
+        situacao:
+            situacao,
+
         diasRestantes:
             diasRestantes,
+
         dataPrevista:
             dataPrevista,
+
         duracaoMedia:
             resumo.duracaoMedia
     };
@@ -538,23 +713,35 @@ function calcularPrevisao(produto) {
 
 
 function textoPrevisao(previsao) {
+
     if (
         previsao.situacao ===
         "acabou"
     ) {
+
         return "Já está na lista de compras";
     }
+
 
     const dias =
         previsao.diasRestantes;
 
-    if (dias <= 0) {
+
+    if (
+        dias <= 0
+    ) {
+
         const atraso =
             Math.abs(dias);
 
-        if (atraso < 1) {
+
+        if (
+            atraso < 1
+        ) {
+
             return "Pode estar acabando hoje";
         }
+
 
         return (
             `Previsão vencida há ` +
@@ -562,13 +749,22 @@ function textoPrevisao(previsao) {
         );
     }
 
-    if (dias < 1) {
+
+    if (
+        dias < 1
+    ) {
+
         return "Pode acabar hoje";
     }
 
-    if (dias < 2) {
+
+    if (
+        dias < 2
+    ) {
+
         return "Pode acabar amanhã";
     }
+
 
     return (
         `Estimativa: ${Math.ceil(dias)} dias`
@@ -577,146 +773,201 @@ function textoPrevisao(previsao) {
 
 
 function tituloSituacao(situacao) {
-    if (situacao === "acabou") {
+
+    if (
+        situacao === "acabou"
+    ) {
+
         return "NA LISTA";
     }
 
-    if (situacao === "provavel") {
+
+    if (
+        situacao === "provavel"
+    ) {
+
         return "PROVÁVEL";
     }
 
-    if (situacao === "atencao") {
+
+    if (
+        situacao === "atencao"
+    ) {
+
         return "ATENÇÃO";
     }
+
 
     return "NORMAL";
 }
 
 
 function atualizarPrevisoes() {
+
     const previsoesBox =
         el("previsoesBox");
 
-    if (!previsoesBox) return;
 
-    previsoesBox.innerHTML = "";
+    if (!previsoesBox) {
+        return;
+    }
+
+
+    previsoesBox.innerHTML =
+        "";
+
 
     const produtosConhecidos =
         obterProdutosConhecidos();
 
+
     const previsoes =
         produtosConhecidos
-            .map(produto =>
-                calcularPrevisao(produto)
+            .map(
+                produto =>
+                    calcularPrevisao(
+                        produto
+                    )
             )
-            .filter(previsao =>
-                previsao !== null
+            .filter(
+                previsao =>
+                    previsao !== null
             );
 
-    if (previsoes.length === 0) {
+
+    if (
+        previsoes.length === 0
+    ) {
+
         previsoesBox.innerHTML = `
             <div class="estado-previsao-vazio">
+
                 Ainda preciso observar pelo menos um ciclo
-                <strong>comprado → acabou</strong>
+
+                <strong>
+                    comprado → acabou
+                </strong>
+
                 para começar a prever.
+
             </div>
         `;
 
         return;
     }
 
-    previsoes.sort((a, b) => {
-        if (
-            a.situacao === "acabou" &&
-            b.situacao !== "acabou"
-        ) {
-            return -1;
+
+    previsoes.sort(
+        (a, b) => {
+
+            if (
+                a.situacao === "acabou" &&
+                b.situacao !== "acabou"
+            ) {
+
+                return -1;
+            }
+
+
+            if (
+                b.situacao === "acabou" &&
+                a.situacao !== "acabou"
+            ) {
+
+                return 1;
+            }
+
+
+            return (
+                a.diasRestantes -
+                b.diasRestantes
+            );
         }
+    );
 
-        if (
-            b.situacao === "acabou" &&
-            a.situacao !== "acabou"
-        ) {
-            return 1;
-        }
-
-        return (
-            a.diasRestantes -
-            b.diasRestantes
-        );
-    });
-
-
-    /*
-        Na tela inicial não precisamos mostrar
-        uma lista enorme de produtos normais.
-
-        Mostramos os 5 mais próximos.
-    */
 
     const principais =
         previsoes.slice(0, 5);
 
 
-    principais.forEach(previsao => {
-        const linha =
-            document.createElement("div");
+    principais.forEach(
+        previsao => {
 
-        linha.className =
-            "previsao-item";
+            const linha =
+                document.createElement(
+                    "div"
+                );
 
-        linha.innerHTML = `
-            <div class="previsao-info">
 
-                <strong>
-                    ${previsao.produto.nome}
-                </strong>
+            linha.className =
+                "previsao-item";
 
-                <span>
-                    ${textoPrevisao(previsao)}
+
+            linha.innerHTML = `
+
+                <div class="previsao-info">
+
+                    <strong>
+                        ${previsao.produto.nome}
+                    </strong>
+
+                    <span>
+                        ${textoPrevisao(previsao)}
+                    </span>
+
+                </div>
+
+
+                <span
+                    class="
+                        previsao-status
+                        ${previsao.situacao}
+                    "
+                >
+                    ${
+                        tituloSituacao(
+                            previsao.situacao
+                        )
+                    }
                 </span>
+            `;
 
-            </div>
 
-            <span
-                class="
-                    previsao-status
-                    ${previsao.situacao}
-                "
-            >
-                ${
-                    tituloSituacao(
-                        previsao.situacao
-                    )
-                }
-            </span>
-        `;
-
-        previsoesBox.appendChild(
-            linha
-        );
-    });
+            previsoesBox.appendChild(
+                linha
+            );
+        }
+    );
 }
 
 
-// ==========================================
+// ==================================================
 // RESUMO
-// ==========================================
+// ==================================================
 
 function atualizarResumo() {
+
     const resumoBox =
         el("resumoBox");
 
-    if (!resumoBox) return;
 
-    resumoBox.innerHTML = "";
+    if (!resumoBox) {
+        return;
+    }
+
+
+    resumoBox.innerHTML =
+        "";
+
 
     const produtosConhecidos =
         obterProdutosConhecidos();
 
+
     if (
         produtosConhecidos.length === 0
     ) {
+
         resumoBox.innerHTML = `
             <div class="estado-vazio">
                 Ainda não há dados suficientes
@@ -727,123 +978,152 @@ function atualizarResumo() {
     }
 
 
-    produtosConhecidos.forEach(produto => {
-        const resumo =
-            calcularResumoProduto(produto);
+    produtosConhecidos.forEach(
+        produto => {
 
-        const previsao =
-            calcularPrevisao(produto);
+            const resumo =
+                calcularResumoProduto(
+                    produto
+                );
 
-        const card =
-            document.createElement("div");
 
-        card.className =
-            "resumo-produto";
+            const previsao =
+                calcularPrevisao(
+                    produto
+                );
 
-        let ultimoTexto =
-            "Nenhum evento";
 
-        if (resumo.ultimoEvento) {
-            ultimoTexto =
-                resumo.ultimoEvento.tipo ===
-                "acabou"
-                    ? "ACABOU"
-                    : "COMPRADO";
-        }
+            const card =
+                document.createElement(
+                    "div"
+                );
 
-        let previsaoHTML = `
-            <div class="previsao-resumo">
-                Previsão ainda indisponível
-            </div>
-        `;
 
-        if (previsao) {
-            previsaoHTML = `
+            card.className =
+                "resumo-produto";
+
+
+            let ultimoTexto =
+                "Nenhum evento";
+
+
+            if (
+                resumo.ultimoEvento
+            ) {
+
+                ultimoTexto =
+                    resumo.ultimoEvento.tipo ===
+                    "acabou"
+                        ? "ACABOU"
+                        : "COMPRADO";
+            }
+
+
+            let previsaoHTML = `
+
                 <div class="previsao-resumo">
-                    ${textoPrevisao(previsao)}
+                    Previsão ainda indisponível
                 </div>
             `;
+
+
+            if (previsao) {
+
+                previsaoHTML = `
+
+                    <div class="previsao-resumo">
+                        ${textoPrevisao(previsao)}
+                    </div>
+                `;
+            }
+
+
+            card.innerHTML = `
+
+                <div class="resumo-topo">
+
+                    <strong>
+                        ${produto.nome}
+                    </strong>
+
+                    <span class="ultimo-evento">
+                        ${ultimoTexto}
+                    </span>
+
+                </div>
+
+
+                <div class="metricas">
+
+                    <div class="metrica">
+
+                        <span>
+                            Duração média
+                        </span>
+
+                        <strong>
+                            ${
+                                formatarDuracao(
+                                    resumo.duracaoMedia
+                                )
+                            }
+                        </strong>
+
+                    </div>
+
+
+                    <div class="metrica">
+
+                        <span>
+                            Reposição média
+                        </span>
+
+                        <strong>
+                            ${
+                                formatarDuracao(
+                                    resumo.reposicaoMedia
+                                )
+                            }
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                ${previsaoHTML}
+
+
+                <div class="resumo-rodape">
+
+                    <span>
+                        Ciclos de consumo:
+                        ${resumo.ciclosDuracao}
+                    </span>
+
+                    <span>
+                        Reposições medidas:
+                        ${resumo.ciclosReposicao}
+                    </span>
+
+                </div>
+            `;
+
+
+            resumoBox.appendChild(
+                card
+            );
         }
-
-        card.innerHTML = `
-            <div class="resumo-topo">
-
-                <strong>
-                    ${produto.nome}
-                </strong>
-
-                <span class="ultimo-evento">
-                    ${ultimoTexto}
-                </span>
-
-            </div>
-
-
-            <div class="metricas">
-
-                <div class="metrica">
-
-                    <span>
-                        Duração média
-                    </span>
-
-                    <strong>
-                        ${
-                            formatarDuracao(
-                                resumo.duracaoMedia
-                            )
-                        }
-                    </strong>
-
-                </div>
-
-
-                <div class="metrica">
-
-                    <span>
-                        Reposição média
-                    </span>
-
-                    <strong>
-                        ${
-                            formatarDuracao(
-                                resumo.reposicaoMedia
-                            )
-                        }
-                    </strong>
-
-                </div>
-
-            </div>
-
-            ${previsaoHTML}
-
-
-            <div class="resumo-rodape">
-
-                <span>
-                    Ciclos de consumo:
-                    ${resumo.ciclosDuracao}
-                </span>
-
-                <span>
-                    Reposições medidas:
-                    ${resumo.ciclosReposicao}
-                </span>
-
-            </div>
-        `;
-
-        resumoBox.appendChild(card);
-    });
+    );
 }
 
 
-// ==========================================
+// ==================================================
 // LISTA DE COMPRAS
-// ==========================================
+// ==================================================
 
 function totalItens() {
+
     return itens.reduce(
         (total, item) =>
             total + item.quantidade,
@@ -853,22 +1133,34 @@ function totalItens() {
 
 
 function atualizarLista() {
+
     const lista =
         el("lista");
 
     const contador =
         el("contador");
 
-    if (!lista) return;
 
-    lista.innerHTML = "";
+    if (!lista) {
+        return;
+    }
+
+
+    lista.innerHTML =
+        "";
+
 
     if (contador) {
+
         contador.textContent =
             totalItens();
     }
 
-    if (itens.length === 0) {
+
+    if (
+        itens.length === 0
+    ) {
+
         lista.innerHTML = `
             <div class="estado-vazio">
                 Nenhum item na lista
@@ -878,14 +1170,22 @@ function atualizarLista() {
         return;
     }
 
+
     itens.forEach(
         (item, indice) => {
-            const linha =
-                document.createElement("div");
 
-            linha.className = "item";
+            const linha =
+                document.createElement(
+                    "div"
+                );
+
+
+            linha.className =
+                "item";
+
 
             linha.innerHTML = `
+
                 <div class="item-dados">
 
                     <span class="item-nome">
@@ -898,6 +1198,7 @@ function atualizarLista() {
 
                 </div>
 
+
                 <div class="item-acoes">
 
                     <button
@@ -908,6 +1209,7 @@ function atualizarLista() {
                         −
                     </button>
 
+
                     <button
                         class="acao quantidade"
                         data-acao="mais"
@@ -915,6 +1217,7 @@ function atualizarLista() {
                     >
                         +
                     </button>
+
 
                     <button
                         class="acao concluir"
@@ -927,7 +1230,10 @@ function atualizarLista() {
                 </div>
             `;
 
-            lista.appendChild(linha);
+
+            lista.appendChild(
+                linha
+            );
         }
     );
 }
@@ -938,37 +1244,56 @@ function adicionarItem(
     ean = null,
     registrar = true
 ) {
-    nome = nome.trim();
+
+    nome =
+        nome.trim();
+
 
     const existente =
         itens.find(
             item =>
-                item.nome.toLowerCase() ===
-                nome.toLowerCase()
+                item.nome
+                    .toLowerCase() ===
+                nome
+                    .toLowerCase()
         );
 
+
     if (existente) {
+
         existente.quantidade++;
+
 
         if (
             !existente.ean &&
             ean
         ) {
+
             existente.ean =
                 ean;
         }
 
     } else {
+
         itens.push({
-            nome: nome,
-            quantidade: 1,
-            ean: ean
+
+            nome:
+                nome,
+
+            quantidade:
+                1,
+
+            ean:
+                ean
         });
     }
 
+
     salvarLista();
 
+
     if (registrar) {
+
         registrarEvento(
             "acabou",
             nome,
@@ -977,42 +1302,63 @@ function adicionarItem(
         );
     }
 
+
     atualizarLista();
     atualizarPrevisoes();
 }
 
 
 function lidarCliqueLista(event) {
+
     const botao =
         event.target.closest(
             "[data-acao]"
         );
 
-    if (!botao) return;
+
+    if (!botao) {
+        return;
+    }
+
 
     const indice =
         Number(
             botao.dataset.indice
         );
 
+
     const acao =
         botao.dataset.acao;
+
 
     const item =
         itens[indice];
 
-    if (!item) return;
+
+    if (!item) {
+        return;
+    }
 
 
-    if (acao === "mais") {
+    if (
+        acao === "mais"
+    ) {
+
         item.quantidade++;
     }
 
 
-    if (acao === "menos") {
+    if (
+        acao === "menos"
+    ) {
+
         item.quantidade--;
 
-        if (item.quantidade <= 0) {
+
+        if (
+            item.quantidade <= 0
+        ) {
+
             itens.splice(
                 indice,
                 1
@@ -1021,7 +1367,10 @@ function lidarCliqueLista(event) {
     }
 
 
-    if (acao === "comprado") {
+    if (
+        acao === "comprado"
+    ) {
+
         registrarEvento(
             "comprado",
             item.nome,
@@ -1029,10 +1378,12 @@ function lidarCliqueLista(event) {
             item.quantidade
         );
 
+
         itens.splice(
             indice,
             1
         );
+
 
         mostrarMensagem(
             `${item.nome} marcado como comprado`
@@ -1047,20 +1398,28 @@ function lidarCliqueLista(event) {
 
 
 function limparLista() {
-    if (itens.length === 0) {
+
+    if (
+        itens.length === 0
+    ) {
+
         return;
     }
+
 
     const confirmar =
         confirm(
             "Limpar toda a lista?"
         );
 
+
     if (!confirmar) {
         return;
     }
 
+
     itens = [];
+
 
     salvarLista();
     atualizarLista();
@@ -1068,27 +1427,125 @@ function limparLista() {
 }
 
 
-// ==========================================
-// PRODUTOS
-// ==========================================
+// ==================================================
+// PRODUTOS CADASTRADOS
+// ==================================================
 
 function buscarProdutoPorEAN(ean) {
+
     return produtos.find(
         produto =>
-            produto.ean === ean
+            String(produto.ean) ===
+            String(ean)
+    );
+}
+
+
+function contarEventosProduto(produto) {
+
+    return eventosDoProduto(
+        produto
+    ).length;
+}
+
+
+function ultimoEventoProduto(produto) {
+
+    const eventos =
+        eventosDoProduto(
+            produto
+        );
+
+
+    if (
+        eventos.length === 0
+    ) {
+
+        return null;
+    }
+
+
+    return eventos[
+        eventos.length - 1
+    ];
+}
+
+
+function obterProdutosFiltrados() {
+
+    const busca =
+        el("buscaProdutos");
+
+
+    const termo =
+        busca
+            ? busca.value
+                .trim()
+                .toLowerCase()
+            : "";
+
+
+    if (!termo) {
+
+        return [...produtos];
+    }
+
+
+    return produtos.filter(
+        produto => {
+
+            const nome =
+                String(
+                    produto.nome || ""
+                ).toLowerCase();
+
+
+            const ean =
+                String(
+                    produto.ean || ""
+                ).toLowerCase();
+
+
+            return (
+                nome.includes(termo) ||
+                ean.includes(termo)
+            );
+        }
     );
 }
 
 
 function atualizarProdutos() {
+
     const produtosBox =
         el("produtosBox");
 
-    if (!produtosBox) return;
+    const contadorProdutos =
+        el("contadorProdutos");
 
-    produtosBox.innerHTML = "";
 
-    if (produtos.length === 0) {
+    if (!produtosBox) {
+        return;
+    }
+
+
+    produtosBox.innerHTML =
+        "";
+
+
+    if (contadorProdutos) {
+
+        contadorProdutos.textContent =
+            produtos.length === 1
+                ? "1 produto cadastrado"
+                : `${produtos.length} produtos cadastrados`;
+    }
+
+
+    if (
+        produtos.length === 0
+    ) {
+
         produtosBox.innerHTML = `
             <div class="estado-vazio">
                 Nenhum produto cadastrado
@@ -1098,36 +1555,332 @@ function atualizarProdutos() {
         return;
     }
 
-    produtos.forEach(produto => {
-        const linha =
-            document.createElement("div");
 
-        linha.className =
-            "produto-cadastrado";
+    const filtrados =
+        obterProdutosFiltrados();
 
-        linha.innerHTML = `
-            <strong>
-                ${produto.nome}
-            </strong>
 
-            <span>
-                EAN ${produto.ean}
-            </span>
+    if (
+        filtrados.length === 0
+    ) {
+
+        produtosBox.innerHTML = `
+            <div class="estado-vazio">
+                Nenhum produto encontrado
+            </div>
         `;
 
-        produtosBox.appendChild(
-            linha
-        );
-    });
+        return;
+    }
+
+
+    filtrados.forEach(
+        produto => {
+
+            const indiceReal =
+                produtos.findIndex(
+                    item =>
+                        item === produto
+                );
+
+
+            const totalEventos =
+                contarEventosProduto(
+                    produto
+                );
+
+
+            const ultimoEvento =
+                ultimoEventoProduto(
+                    produto
+                );
+
+
+            const linha =
+                document.createElement(
+                    "div"
+                );
+
+
+            linha.className =
+                "produto-card";
+
+
+            linha.innerHTML = `
+
+                <div class="produto-info">
+
+                    <div class="produto-nome-linha">
+
+                        <strong>
+                            ${produto.nome}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="produto-ean">
+                        EAN ${produto.ean}
+                    </div>
+
+
+                    <div class="produto-estatisticas">
+
+                        <span>
+                            ${
+                                totalEventos === 1
+                                    ? "1 evento"
+                                    : `${totalEventos} eventos`
+                            }
+                        </span>
+
+                        <span>
+                            Último:
+                            ${
+                                ultimoEvento
+                                    ? formatarDataCurta(
+                                        ultimoEvento.data
+                                      )
+                                    : "sem registro"
+                            }
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="produto-acoes">
+
+                    <button
+                        class="produto-botao editar"
+                        data-produto-acao="editar"
+                        data-produto-indice="${indiceReal}"
+                    >
+                        Editar
+                    </button>
+
+
+                    <button
+                        class="produto-botao excluir"
+                        data-produto-acao="excluir"
+                        data-produto-indice="${indiceReal}"
+                    >
+                        Excluir
+                    </button>
+
+                </div>
+            `;
+
+
+            produtosBox.appendChild(
+                linha
+            );
+        }
+    );
 }
 
 
+// ==================================================
+// EDITAR PRODUTO
+// ==================================================
+
+function editarProduto(indice) {
+
+    const produto =
+        produtos[indice];
+
+
+    if (!produto) {
+        return;
+    }
+
+
+    const novoNome =
+        prompt(
+            "Novo nome do produto:",
+            produto.nome
+        );
+
+
+    if (
+        !novoNome ||
+        !novoNome.trim()
+    ) {
+
+        return;
+    }
+
+
+    const nomeLimpo =
+        novoNome.trim();
+
+
+    if (
+        nomeLimpo ===
+        produto.nome
+    ) {
+
+        return;
+    }
+
+
+    const nomeAntigo =
+        produto.nome;
+
+
+    produto.nome =
+        nomeLimpo;
+
+
+    /*
+        Se o produto estiver na lista,
+        atualizamos o nome também.
+
+        Fazemos a associação pelo EAN para
+        não alterar outro produto por engano.
+    */
+
+    itens.forEach(item => {
+
+        if (
+            produto.ean &&
+            item.ean &&
+            String(item.ean) ===
+            String(produto.ean)
+        ) {
+
+            item.nome =
+                nomeLimpo;
+        }
+    });
+
+
+    salvarProdutos();
+    salvarLista();
+
+
+    atualizarProdutos();
+    atualizarLista();
+    atualizarResumo();
+    atualizarPrevisoes();
+
+
+    mostrarMensagem(
+        `${nomeAntigo} renomeado para ${nomeLimpo}`
+    );
+}
+
+
+// ==================================================
+// EXCLUIR PRODUTO
+// ==================================================
+
+function excluirProduto(indice) {
+
+    const produto =
+        produtos[indice];
+
+
+    if (!produto) {
+        return;
+    }
+
+
+    const confirmar =
+        confirm(
+            `Excluir "${produto.nome}" dos produtos cadastrados?\n\nO histórico de consumo não será apagado.`
+        );
+
+
+    if (!confirmar) {
+        return;
+    }
+
+
+    produtos.splice(
+        indice,
+        1
+    );
+
+
+    salvarProdutos();
+
+    atualizarProdutos();
+    atualizarResumo();
+    atualizarPrevisoes();
+
+
+    mostrarMensagem(
+        `${produto.nome} removido do cadastro`
+    );
+}
+
+
+// ==================================================
+// CLIQUES NA ÁREA DE PRODUTOS
+// ==================================================
+
+function lidarCliqueProdutos(event) {
+
+    const botao =
+        event.target.closest(
+            "[data-produto-acao]"
+        );
+
+
+    if (!botao) {
+        return;
+    }
+
+
+    const acao =
+        botao.dataset.produtoAcao;
+
+
+    const indice =
+        Number(
+            botao.dataset.produtoIndice
+        );
+
+
+    if (
+        acao === "editar"
+    ) {
+
+        editarProduto(
+            indice
+        );
+    }
+
+
+    if (
+        acao === "excluir"
+    ) {
+
+        excluirProduto(
+            indice
+        );
+    }
+}
+
+
+// ==================================================
+// PROCESSAMENTO DE EAN
+// ==================================================
+
 function processarEAN(ean) {
+
     ean =
         String(ean)
-            .replace(/\D/g, "");
+            .replace(
+                /\D/g,
+                ""
+            );
+
 
     if (!ean) {
+
         mostrarMensagem(
             "Código inválido"
         );
@@ -1135,48 +1888,89 @@ function processarEAN(ean) {
         return;
     }
 
+
     const produto =
-        buscarProdutoPorEAN(ean);
+        buscarProdutoPorEAN(
+            ean
+        );
+
+
+    /*
+        Se o EAN já existe, nunca cadastramos
+        outro produto com o mesmo código.
+    */
 
     if (produto) {
+
         adicionarItem(
             produto.nome,
             ean
         );
 
+
         mostrarMensagem(
             `${produto.nome} adicionado`
         );
 
+
         return;
     }
 
-    const nome = prompt(
-        `Produto ainda não cadastrado.\n\nEAN: ${ean}\n\nNome do produto:`
-    );
+
+    const nome =
+        prompt(
+            `Produto ainda não cadastrado.\n\nEAN: ${ean}\n\nNome do produto:`
+        );
+
 
     if (
         !nome ||
         !nome.trim()
     ) {
+
         return;
     }
+
 
     const nomeLimpo =
         nome.trim();
 
+
+    /*
+        Segunda verificação de segurança.
+    */
+
+    if (
+        buscarProdutoPorEAN(ean)
+    ) {
+
+        mostrarMensagem(
+            "Este EAN já está cadastrado"
+        );
+
+        return;
+    }
+
+
     produtos.push({
-        ean: ean,
-        nome: nomeLimpo
+
+        ean:
+            ean,
+
+        nome:
+            nomeLimpo
     });
+
 
     salvarProdutos();
     atualizarProdutos();
+
 
     adicionarItem(
         nomeLimpo,
         ean
     );
+
 
     mostrarMensagem(
         `${nomeLimpo} cadastrado e adicionado`
@@ -1185,29 +1979,40 @@ function processarEAN(ean) {
 
 
 function adicionarPorCodigo() {
+
     const entrada =
         prompt(
             "Digite o código de barras:"
         );
 
-    if (!entrada) return;
 
-    processarEAN(entrada);
+    if (!entrada) {
+        return;
+    }
+
+
+    processarEAN(
+        entrada
+    );
 }
 
 
 function adicionarManualmente() {
+
     const nome =
         prompt(
             "Nome do produto:"
         );
 
+
     if (
         !nome ||
         !nome.trim()
     ) {
+
         return;
     }
+
 
     adicionarItem(
         nome.trim(),
@@ -1216,12 +2021,16 @@ function adicionarManualmente() {
 }
 
 
-// ==========================================
+// ==================================================
 // PAINÉIS
-// ==========================================
+// ==================================================
 
-function fecharOutrosPaineis(excecao) {
+function fecharOutrosPaineis(
+    excecao
+) {
+
     const areas = {
+
         resumo:
             el("areaResumo"),
 
@@ -1232,7 +2041,9 @@ function fecharOutrosPaineis(excecao) {
             el("areaProdutos")
     };
 
+
     const botoes = {
+
         resumo:
             el("botaoResumo"),
 
@@ -1243,35 +2054,47 @@ function fecharOutrosPaineis(excecao) {
             el("botaoProdutos")
     };
 
-    Object.keys(areas).forEach(nome => {
+
+    Object.keys(
+        areas
+    ).forEach(nome => {
+
         if (
             nome !== excecao &&
             areas[nome]
         ) {
-            areas[nome].hidden = true;
+
+            areas[nome].hidden =
+                true;
         }
     });
+
 
     if (
         excecao !== "resumo" &&
         botoes.resumo
     ) {
+
         botoes.resumo.textContent =
             "Resumo de consumo";
     }
+
 
     if (
         excecao !== "historico" &&
         botoes.historico
     ) {
+
         botoes.historico.textContent =
             "Histórico";
     }
+
 
     if (
         excecao !== "produtos" &&
         botoes.produtos
     ) {
+
         botoes.produtos.textContent =
             "Produtos cadastrados";
     }
@@ -1279,28 +2102,38 @@ function fecharOutrosPaineis(excecao) {
 
 
 function alternarResumo() {
+
     const area =
         el("areaResumo");
 
     const botao =
         el("botaoResumo");
 
-    if (!area) return;
+
+    if (!area) {
+        return;
+    }
+
 
     const abrir =
         area.hidden;
 
+
     area.hidden =
         !abrir;
 
+
     if (botao) {
+
         botao.textContent =
             abrir
                 ? "Ocultar resumo"
                 : "Resumo de consumo";
     }
 
+
     if (abrir) {
+
         fecharOutrosPaineis(
             "resumo"
         );
@@ -1311,28 +2144,38 @@ function alternarResumo() {
 
 
 function alternarHistorico() {
+
     const area =
         el("areaHistorico");
 
     const botao =
         el("botaoHistorico");
 
-    if (!area) return;
+
+    if (!area) {
+        return;
+    }
+
 
     const abrir =
         area.hidden;
 
+
     area.hidden =
         !abrir;
 
+
     if (botao) {
+
         botao.textContent =
             abrir
                 ? "Ocultar histórico"
                 : "Histórico";
     }
 
+
     if (abrir) {
+
         fecharOutrosPaineis(
             "historico"
         );
@@ -1343,28 +2186,38 @@ function alternarHistorico() {
 
 
 function alternarProdutos() {
+
     const area =
         el("areaProdutos");
 
     const botao =
         el("botaoProdutos");
 
-    if (!area) return;
+
+    if (!area) {
+        return;
+    }
+
 
     const abrir =
         area.hidden;
 
+
     area.hidden =
         !abrir;
 
+
     if (botao) {
+
         botao.textContent =
             abrir
                 ? "Ocultar produtos cadastrados"
                 : "Produtos cadastrados";
     }
 
+
     if (abrir) {
+
         fecharOutrosPaineis(
             "produtos"
         );
@@ -1374,40 +2227,58 @@ function alternarProdutos() {
 }
 
 
+// ==================================================
+// LIMPAR HISTÓRICO
+// ==================================================
+
 function limparHistorico() {
-    if (historico.length === 0) {
+
+    if (
+        historico.length === 0
+    ) {
+
         return;
     }
+
 
     const confirmar =
         confirm(
             "Apagar todo o histórico?"
         );
 
-    if (!confirmar) return;
+
+    if (!confirmar) {
+        return;
+    }
+
 
     historico = [];
+
 
     salvarHistorico();
 
     atualizarHistorico();
     atualizarResumo();
     atualizarPrevisoes();
+    atualizarProdutos();
 }
 
 
-// ==========================================
+// ==================================================
 // SCANNER
-// ==========================================
+// ==================================================
 
 async function abrirScanner() {
+
     const scannerModal =
         el("scannerModal");
+
 
     if (
         typeof Html5Qrcode ===
         "undefined"
     ) {
+
         alert(
             "O leitor de código de barras não foi carregado."
         );
@@ -1415,18 +2286,28 @@ async function abrirScanner() {
         return;
     }
 
-    if (!scannerModal) return;
 
-    scannerModal.hidden = false;
+    if (!scannerModal) {
+        return;
+    }
 
-    leituraEmAndamento = false;
+
+    scannerModal.hidden =
+        false;
+
+
+    leituraEmAndamento =
+        false;
+
 
     scanner =
         new Html5Qrcode(
             "reader"
         );
 
+
     const configuracao = {
+
         fps: 10,
 
         qrbox: {
@@ -1435,10 +2316,15 @@ async function abrirScanner() {
         }
     };
 
+
     try {
-        scannerAtivo = true;
+
+        scannerAtivo =
+            true;
+
 
         await scanner.start(
+
             {
                 facingMode:
                     "environment"
@@ -1447,21 +2333,31 @@ async function abrirScanner() {
             configuracao,
 
             async decodedText => {
+
                 if (
                     leituraEmAndamento
                 ) {
+
                     return;
                 }
 
-                leituraEmAndamento = true;
+
+                leituraEmAndamento =
+                    true;
+
 
                 if (
                     navigator.vibrate
                 ) {
-                    navigator.vibrate(120);
+
+                    navigator.vibrate(
+                        120
+                    );
                 }
 
+
                 await fecharScanner();
+
 
                 processarEAN(
                     decodedText
@@ -1474,14 +2370,20 @@ async function abrirScanner() {
         );
 
     } catch (erro) {
+
         console.error(
             "Erro na câmera:",
             erro
         );
 
-        scannerAtivo = false;
 
-        scannerModal.hidden = true;
+        scannerAtivo =
+            false;
+
+
+        scannerModal.hidden =
+            true;
+
 
         alert(
             "Não foi possível abrir a câmera."
@@ -1491,49 +2393,70 @@ async function abrirScanner() {
 
 
 async function fecharScanner() {
+
     const scannerModal =
         el("scannerModal");
+
 
     if (
         scanner &&
         scannerAtivo
     ) {
+
         try {
+
             await scanner.stop();
+
         } catch (erro) {
+
             console.log(
                 "Scanner já estava parado."
             );
         }
     }
 
-    scannerAtivo = false;
+
+    scannerAtivo =
+        false;
+
 
     if (scanner) {
+
         try {
+
             scanner.clear();
+
         } catch {
-            // Ignora.
+
+            // Ignora
         }
     }
 
-    scanner = null;
+
+    scanner =
+        null;
+
 
     if (scannerModal) {
-        scannerModal.hidden = true;
+
+        scannerModal.hidden =
+            true;
     }
 }
 
 
-// ==========================================
+// ==================================================
 // EVENTOS
-// ==========================================
+// ==================================================
 
 function configurarEventos() {
+
     const lista =
         el("lista");
 
+
     if (lista) {
+
         lista.addEventListener(
             "click",
             lidarCliqueLista
@@ -1541,39 +2464,74 @@ function configurarEventos() {
     }
 
 
+    const produtosBox =
+        el("produtosBox");
+
+
+    if (produtosBox) {
+
+        produtosBox.addEventListener(
+            "click",
+            lidarCliqueProdutos
+        );
+    }
+
+
+    const buscaProdutos =
+        el("buscaProdutos");
+
+
+    if (buscaProdutos) {
+
+        buscaProdutos.addEventListener(
+            "input",
+            atualizarProdutos
+        );
+    }
+
+
     const eventos = [
+
         [
             "botaoAdicionar",
             adicionarManualmente
         ],
+
         [
             "botaoCodigo",
             adicionarPorCodigo
         ],
+
         [
             "botaoScanner",
             abrirScanner
         ],
+
         [
             "botaoFecharScanner",
             fecharScanner
         ],
+
         [
             "botaoResumo",
             alternarResumo
         ],
+
         [
             "botaoHistorico",
             alternarHistorico
         ],
+
         [
             "botaoProdutos",
             alternarProdutos
         ],
+
         [
             "botaoLimpar",
             limparLista
         ],
+
         [
             "botaoLimparHistorico",
             limparHistorico
@@ -1583,10 +2541,13 @@ function configurarEventos() {
 
     eventos.forEach(
         ([id, funcao]) => {
+
             const elemento =
                 el(id);
 
+
             if (elemento) {
+
                 elemento.addEventListener(
                     "click",
                     funcao
@@ -1597,9 +2558,9 @@ function configurarEventos() {
 }
 
 
-// ==========================================
+// ==================================================
 // GLOBAIS
-// ==========================================
+// ==================================================
 
 window.alternarResumo =
     alternarResumo;

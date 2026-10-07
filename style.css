@@ -41,9 +41,13 @@ body {
 }
 
 
-button {
+button,
+input {
     font-family: inherit;
+}
 
+
+button {
     -webkit-tap-highlight-color:
         transparent;
 }
@@ -62,7 +66,9 @@ button {
 }
 
 
-/* TOPO */
+/* ==================================================
+   TOPO
+   ================================================== */
 
 .topo {
     display: flex;
@@ -130,7 +136,9 @@ button {
 }
 
 
-/* CARDS */
+/* ==================================================
+   CARDS
+   ================================================== */
 
 .card {
     padding: 20px;
@@ -201,7 +209,9 @@ button {
 }
 
 
-/* LISTA */
+/* ==================================================
+   LISTA
+   ================================================== */
 
 .item {
     min-height: 64px;
@@ -222,7 +232,8 @@ button {
 
 
 .item:last-child {
-    border-bottom: none;
+    border-bottom:
+        none;
 }
 
 
@@ -269,16 +280,17 @@ button {
 
     display: flex;
 
-    justify-content: center;
-
     align-items: center;
+
+    justify-content: center;
 
     font-size: 18px;
 }
 
 
 .quantidade {
-    background: #efefec;
+    background:
+        #efefec;
 
     color:
         var(--texto);
@@ -293,7 +305,9 @@ button {
 }
 
 
-/* PREVISÕES */
+/* ==================================================
+   PREVISÕES
+   ================================================== */
 
 .previsoes-card {
     margin-top: 14px;
@@ -301,7 +315,10 @@ button {
 
 
 .estado-previsao-vazio {
-    padding: 21px 5px 7px;
+    padding:
+        21px
+        5px
+        7px;
 
     color: #999;
 
@@ -337,7 +354,8 @@ button {
 
 
 .previsao-item:last-child {
-    border-bottom: none;
+    border-bottom:
+        none;
 }
 
 
@@ -366,7 +384,9 @@ button {
 .previsao-status {
     flex-shrink: 0;
 
-    padding: 5px 7px;
+    padding:
+        5px
+        7px;
 
     border-radius: 8px;
 
@@ -406,7 +426,9 @@ button {
 }
 
 
-/* AÇÕES */
+/* ==================================================
+   AÇÕES
+   ================================================== */
 
 .acoes {
     display: grid;
@@ -438,7 +460,8 @@ button {
 
     border-radius: 16px;
 
-    background: #e9e9e5;
+    background:
+        #e9e9e5;
 
     color:
         var(--texto);
@@ -464,7 +487,8 @@ button {
 .botao.menu {
     min-height: 47px;
 
-    background: transparent;
+    background:
+        transparent;
 
     border:
         1px solid #d7d6d0;
@@ -487,16 +511,75 @@ button {
 }
 
 
-/* PRODUTOS */
+/* ==================================================
+   PRODUTOS
+   ================================================== */
 
-.produto-cadastrado {
-    padding: 14px 0;
+.produtos-cabecalho {
+    margin-bottom: 16px;
+}
 
-    display: flex;
 
-    flex-direction: column;
+.busca-produtos {
+    margin-top: 15px;
 
-    gap: 4px;
+    margin-bottom: 8px;
+}
+
+
+.busca-produtos input {
+    width: 100%;
+
+    height: 46px;
+
+    padding:
+        0
+        14px;
+
+    border:
+        1px solid
+        var(--borda);
+
+    border-radius: 14px;
+
+    background:
+        var(--fundo);
+
+    color:
+        var(--texto);
+
+    font-size: 14px;
+
+    outline: none;
+}
+
+
+.busca-produtos input:focus {
+    border-color:
+        #b8b9b2;
+
+    background:
+        #ffffff;
+}
+
+
+.contador-produtos {
+    margin:
+        11px
+        2px
+        4px;
+
+    color:
+        #aaa;
+
+    font-size: 10px;
+}
+
+
+.produto-card {
+    padding:
+        16px
+        0;
 
     border-bottom:
         1px solid
@@ -504,27 +587,109 @@ button {
 }
 
 
-.produto-cadastrado:last-child {
-    border-bottom: none;
+.produto-card:last-child {
+    border-bottom:
+        none;
 }
 
 
-.produto-cadastrado strong {
+.produto-info {
+    min-width: 0;
+}
+
+
+.produto-nome-linha {
+    display: flex;
+
+    align-items: center;
+
+    justify-content:
+        space-between;
+
+    gap: 10px;
+}
+
+
+.produto-nome-linha strong {
     font-size: 15px;
 }
 
 
-.produto-cadastrado span {
+.produto-ean {
+    margin-top: 4px;
+
     color: #999;
 
-    font-size: 12px;
+    font-size: 11px;
 }
 
 
-/* HISTÓRICO */
+.produto-estatisticas {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+    margin-top: 8px;
+
+    color: #aaa;
+
+    font-size: 10px;
+}
+
+
+.produto-acoes {
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 8px;
+
+    margin-top: 12px;
+}
+
+
+.produto-botao {
+    min-height: 36px;
+
+    border: none;
+
+    border-radius: 11px;
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+
+.produto-botao.editar {
+    background:
+        #efefec;
+
+    color:
+        #555;
+}
+
+
+.produto-botao.excluir {
+    background:
+        var(--vermelho-claro);
+
+    color:
+        var(--vermelho);
+}
+
+
+/* ==================================================
+   HISTÓRICO
+   ================================================== */
 
 .evento-historico {
-    padding: 14px 0;
+    padding:
+        14px
+        0;
 
     border-bottom:
         1px solid
@@ -533,7 +698,8 @@ button {
 
 
 .evento-historico:last-child {
-    border-bottom: none;
+    border-bottom:
+        none;
 }
 
 
@@ -552,7 +718,9 @@ button {
 
 
 .evento-tipo {
-    padding: 4px 7px;
+    padding:
+        4px
+        7px;
 
     border-radius: 7px;
 
@@ -598,10 +766,14 @@ button {
 }
 
 
-/* RESUMO */
+/* ==================================================
+   RESUMO
+   ================================================== */
 
 .resumo-produto {
-    padding: 16px 0;
+    padding:
+        16px
+        0;
 
     border-bottom:
         1px solid
@@ -610,7 +782,8 @@ button {
 
 
 .resumo-produto:last-child {
-    border-bottom: none;
+    border-bottom:
+        none;
 }
 
 
@@ -634,11 +807,14 @@ button {
 
 
 .ultimo-evento {
-    padding: 4px 7px;
+    padding:
+        4px
+        7px;
 
     border-radius: 7px;
 
-    background: #efefec;
+    background:
+        #efefec;
 
     color: #777;
 
@@ -691,7 +867,9 @@ button {
 .previsao-resumo {
     margin-top: 10px;
 
-    padding: 10px 12px;
+    padding:
+        10px
+        12px;
 
     border-radius: 12px;
 
@@ -722,7 +900,9 @@ button {
 }
 
 
-/* SCANNER */
+/* ==================================================
+   SCANNER
+   ================================================== */
 
 .scanner-modal {
     position: fixed;
@@ -769,7 +949,10 @@ button {
 
 
 .scanner-conteudo p {
-    margin: 6px 0 18px;
+    margin:
+        6px
+        0
+        18px;
 
     color: #888;
 
@@ -793,7 +976,9 @@ button {
 }
 
 
-/* TOAST */
+/* ==================================================
+   TOAST
+   ================================================== */
 
 .toast {
     position: fixed;
@@ -811,7 +996,9 @@ button {
 
     max-width: 430px;
 
-    padding: 14px 18px;
+    padding:
+        14px
+        18px;
 
     background:
         var(--escuro);
@@ -835,7 +1022,9 @@ button {
 }
 
 
-/* RODAPÉ */
+/* ==================================================
+   RODAPÉ
+   ================================================== */
 
 footer {
     margin-top: 25px;
