@@ -9,10 +9,10 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>KIJK Pantry V1.4</title>
+    <title>KIJK Pantry V2.0</title>
 
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css?v=1.5">
+    <link rel="stylesheet" href="style.css?v=2.0">
 
     <meta name="theme-color" content="#171717">
 </head>
@@ -163,8 +163,15 @@
                 Produtos cadastrados
             </button>
 
-        </section>
 
+            <button
+                id="botaoDados"
+                class="botao menu"
+            >
+                Dados e backup
+            </button>
+
+        </section>
 
         <!-- RESUMO -->
 
@@ -250,9 +257,74 @@
 
         </section>
 
+        <!-- DADOS E BACKUP -->
+
+        <section
+            id="areaDados"
+            class="card painel-extra"
+            hidden
+        >
+
+            <div class="card-cabecalho">
+
+                <div>
+                    <h2>Dados e backup</h2>
+
+                    <p class="subtitulo-card">
+                        Proteja o histórico aprendido pelo Pantry
+                    </p>
+                </div>
+
+            </div>
+
+            <div class="backup-info">
+
+                <div>
+                    <span>Lista</span>
+                    <strong id="backupLista">0</strong>
+                </div>
+
+                <div>
+                    <span>Produtos</span>
+                    <strong id="backupProdutos">0</strong>
+                </div>
+
+                <div>
+                    <span>Eventos</span>
+                    <strong id="backupEventos">0</strong>
+                </div>
+
+            </div>
+
+            <button
+                id="botaoExportar"
+                class="botao backup-principal"
+            >
+                Exportar backup
+            </button>
+
+            <button
+                id="botaoImportar"
+                class="botao"
+            >
+                Restaurar backup
+            </button>
+
+            <input
+                id="arquivoBackup"
+                type="file"
+                accept=".json,application/json"
+                hidden
+            >
+
+            <p class="backup-aviso">
+                O backup inclui lista de compras, produtos cadastrados e todo o histórico.
+            </p>
+
+        </section>
 
         <footer>
-            KIJK Pantry V1.4
+            KIJK Pantry V2.0
         </footer>
 
     </main>
@@ -301,7 +373,7 @@
         src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"
     ></script>
 
-    <script src="app.js?v=1.5"></script>
+    <script src="app.js?v=2.0"></script>
 
 
     <!-- Cache continua desativado durante o desenvolvimento -->

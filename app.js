@@ -1,4 +1,4 @@
-const VERSAO = "1.4";
+const VERSAO = "2.0";
 
 const CHAVE_LISTA = "kijkPantryLista";
 const CHAVE_PRODUTOS = "kijkPantryProdutos";
@@ -2456,6 +2456,324 @@ function adicionarManualmente() {
     );
 }
 
+// ==================================================
+// V2.0 - BACKUP E RESTAURAÇÃO
+// ==================================================
+
+function atualizarDadosBackup() {
+
+    const backupLista =
+        el("backupLista");
+
+    const backupProdutos =
+        el("backupProdutos");
+
+    const backupEventos =
+        el("backupEventos");
+
+
+    if (backupLista) {
+
+        backupLista.textContent =
+            totalItens();
+    }
+
+
+    if (backupProdutos) {
+
+        backupProdutos.textContent =
+            produtos.length;
+    }
+
+
+    if (backupEventos) {
+
+        backupEventos.textContent =
+            historico.length;
+    }
+}
+
+
+function criarBackup() {
+
+    return {
+
+        aplicativo:
+            "KIJK Pantry",
+
+        versao:
+            VERSAO,
+
+        exportadoEm:
+            new Date().toISOString(),
+
+        dados: {
+
+            lista:
+                itens,
+
+            produtos:
+                produtos,
+
+            historico:
+                historico
+        }
+    };
+}
+
+
+function exportarBackup() {
+
+    const backup =
+        criarBackup();
+
+
+    const texto =
+        JSON.stringify(
+            backup,
+            null,
+            2
+        );
+
+
+    const blob =
+        new Blob(
+            [texto],
+            {
+                type:
+                    "application/json"
+            }
+        );
+
+
+    const url =
+        URL.createObjectURL(
+            blob
+        );
+
+
+    const agora =
+        new Date();
+
+
+    const data =
+        agora
+            .toISOString()
+            .slice(0, 10);
+
+
+    const link =
+        document.createElement(
+            "a"
+        );
+
+
+    link.href =
+        url;
+
+
+    link.download =
+        `kijk-pantry-backup-${data}.json`;
+
+
+    document.body.appendChild(
+        link
+    );
+
+
+    link.click();
+
+
+    link.remove();
+
+
+    URL.revokeObjectURL(
+        url
+    );
+
+
+    mostrarMensagem(
+        "Backup exportado"
+    );
+}
+
+
+function validarBackup(backup) {
+
+    if (
+        !backup ||
+        typeof backup !== "object"
+    ) {
+
+        return false;
+    }
+
+
+    if (
+        !backup.dados ||
+        typeof backup.dados !== "object"
+    ) {
+
+        return false;
+    }
+
+
+    if (
+        !Array.isArray(
+            backup.dados.lista
+        )
+    ) {
+
+        return false;
+    }
+
+
+    if (
+        !Array.isArray(
+            backup.dados.produtos
+        )
+    ) {
+
+        return false;
+    }
+
+
+    if (
+        !Array.isArray(
+            backup.dados.historico
+        )
+    ) {
+
+        return false;
+    }
+
+
+    return true;
+}
+
+
+function solicitarImportacaoBackup() {
+
+    const arquivoBackup =
+        el("arquivoBackup");
+
+
+    if (!arquivoBackup) {
+
+        return;
+    }
+
+
+    arquivoBackup.value =
+        "";
+
+
+    arquivoBackup.click();
+}
+
+
+function importarBackup(event) {
+
+    const arquivo =
+        event.target.files[0];
+
+
+    if (!arquivo) {
+
+        return;
+    }
+
+
+    const leitor =
+        new FileReader();
+
+
+    leitor.onload = () => {
+
+        try {
+
+            const backup =
+                JSON.parse(
+                    leitor.result
+                );
+
+
+            if (
+                !validarBackup(
+                    backup
+                )
+            ) {
+
+                alert(
+                    "Este arquivo não parece ser um backup válido do KIJK Pantry."
+                );
+
+                return;
+            }
+
+
+            const confirmar =
+                confirm(
+                    "Restaurar este backup?\n\nOs dados atuais do Pantry serão substituídos."
+                );
+
+
+            if (!confirmar) {
+
+                return;
+            }
+
+
+            itens =
+                backup.dados.lista;
+
+
+            produtos =
+                backup.dados.produtos;
+
+
+            historico =
+                backup.dados.historico;
+
+
+            salvarLista();
+            salvarProdutos();
+            salvarHistorico();
+
+
+            atualizarLista();
+            atualizarProdutos();
+            atualizarHistorico();
+            atualizarResumo();
+            atualizarPrevisoes();
+            atualizarPainelRapido();
+            atualizarDadosBackup();
+
+
+            mostrarMensagem(
+                "Backup restaurado com sucesso"
+            );
+
+
+        } catch (erro) {
+
+            console.error(
+                "Erro ao importar backup:",
+                erro
+            );
+
+
+            alert(
+                "Não foi possível ler este arquivo de backup."
+            );
+        }
+    };
+
+
+    leitor.readAsText(
+        arquivo
+    );
+}
 
 // ==================================================
 // PAINÉIS
@@ -2467,27 +2785,33 @@ function fecharOutrosPaineis(
 
     const areas = {
 
-        resumo:
-            el("areaResumo"),
+    resumo:
+        el("areaResumo"),
 
-        historico:
-            el("areaHistorico"),
+    historico:
+        el("areaHistorico"),
 
-        produtos:
-            el("areaProdutos")
+    produtos:
+        el("areaProdutos"),
+
+    dados:
+        el("areaDados")
     };
 
 
     const botoes = {
 
-        resumo:
-            el("botaoResumo"),
+    resumo:
+        el("botaoResumo"),
 
-        historico:
-            el("botaoHistorico"),
+    historico:
+        el("botaoHistorico"),
 
-        produtos:
-            el("botaoProdutos")
+    produtos:
+        el("botaoProdutos"),
+
+    dados:
+        el("botaoDados")
     };
 
 
@@ -2534,8 +2858,17 @@ function fecharOutrosPaineis(
         botoes.produtos.textContent =
             "Produtos cadastrados";
     }
-}
 
+    if (
+    excecao !== "dados" &&
+    botoes.dados
+    ) {
+
+    botoes.dados.textContent =
+        "Dados e backup";
+
+    }  
+} 
 
 function alternarResumo() {
 
@@ -2662,6 +2995,49 @@ function alternarProdutos() {
     }
 }
 
+function alternarDados() {
+
+    const area =
+        el("areaDados");
+
+
+    const botao =
+        el("botaoDados");
+
+
+    if (!area) {
+
+        return;
+    }
+
+
+    const abrir =
+        area.hidden;
+
+
+    area.hidden =
+        !abrir;
+
+
+    if (botao) {
+
+        botao.textContent =
+            abrir
+                ? "Ocultar dados e backup"
+                : "Dados e backup";
+    }
+
+
+    if (abrir) {
+
+        fecharOutrosPaineis(
+            "dados"
+        );
+
+
+        atualizarDadosBackup();
+    }
+}
 
 // ==================================================
 // LIMPEZA
@@ -2960,8 +3336,22 @@ function configurarEventos() {
         [
             "botaoLimparHistorico",
             limparHistorico
-        ]
-    ];
+        ],
+        [
+            "botaoDados",
+            alternarDados
+        ],
+
+        [
+            "botaoExportar",
+            exportarBackup
+        ],
+
+        [
+            "botaoImportar",
+            solicitarImportacaoBackup
+        ],
+        ];
 
 
     eventos.forEach(
@@ -2980,6 +3370,17 @@ function configurarEventos() {
             }
         }
     );
+            const arquivoBackup =
+            el("arquivoBackup");
+
+
+        if (arquivoBackup) {
+
+            arquivoBackup.addEventListener(
+                "change",
+                importarBackup
+            );
+        }
 }
 
 
@@ -2995,3 +3396,6 @@ window.alternarHistorico =
 
 window.alternarProdutos =
     alternarProdutos;
+
+window.alternarDados =
+    alternarDados;

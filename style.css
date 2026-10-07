@@ -1073,3 +1073,74 @@ footer {
 
     font-weight: 700;
 }
+/* ==================================================
+   V2.0 - BACKUP
+   ================================================== */
+
+.backup-info {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 8px;
+
+    margin:
+        18px 0;
+}
+
+
+.backup-info div {
+    padding: 12px 8px;
+
+    border-radius: 14px;
+
+    background:
+        var(--fundo);
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    gap: 4px;
+}
+
+
+.backup-info span {
+    color:
+        var(--secundario);
+
+    font-size: 9px;
+}
+
+
+.backup-info strong {
+    font-size: 18px;
+}
+
+
+.backup-principal {
+    margin-bottom: 9px;
+
+    background:
+        var(--escuro);
+
+    color: white;
+}
+
+
+.backup-aviso {
+    margin:
+        14px 4px 0;
+
+    color:
+        #999;
+
+    font-size: 10px;
+
+    line-height: 1.5;
+
+    text-align: center;
+}
