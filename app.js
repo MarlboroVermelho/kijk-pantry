@@ -1,4 +1,4 @@
-const VERSAO = "1.1";
+const VERSAO = "1.2";
 
 const CHAVE_LISTA = "kijkPantryLista";
 const CHAVE_PRODUTOS = "kijkPantryProdutos";
@@ -20,13 +20,13 @@ let timerToast = null;
 // ==========================================
 
 document.addEventListener("DOMContentLoaded", () => {
-
     carregarDados();
 
     atualizarLista();
     atualizarProdutos();
     atualizarHistorico();
     atualizarResumo();
+    atualizarPrevisoes();
 
     configurarEventos();
 });
@@ -46,9 +46,7 @@ function el(id) {
 // ==========================================
 
 function carregarDados() {
-
     try {
-
         itens =
             JSON.parse(
                 localStorage.getItem(CHAVE_LISTA)
@@ -65,11 +63,7 @@ function carregarDados() {
             ) || [];
 
     } catch (erro) {
-
-        console.error(
-            "Erro ao carregar dados:",
-            erro
-        );
+        console.error("Erro ao carregar dados:", erro);
 
         itens = [];
         produtos = [];
@@ -79,7 +73,6 @@ function carregarDados() {
 
 
 function salvarLista() {
-
     localStorage.setItem(
         CHAVE_LISTA,
         JSON.stringify(itens)
@@ -88,7 +81,6 @@ function salvarLista() {
 
 
 function salvarProdutos() {
-
     localStorage.setItem(
         CHAVE_PRODUTOS,
         JSON.stringify(produtos)
@@ -97,7 +89,6 @@ function salvarProdutos() {
 
 
 function salvarHistorico() {
-
     localStorage.setItem(
         CHAVE_HISTORICO,
         JSON.stringify(historico)
@@ -110,12 +101,9 @@ function salvarHistorico() {
 // ==========================================
 
 function mostrarMensagem(texto) {
-
     const toast = el("toast");
 
-    if (!toast) {
-        return;
-    }
+    if (!toast) return;
 
     clearTimeout(timerToast);
 
@@ -123,9 +111,7 @@ function mostrarMensagem(texto) {
     toast.hidden = false;
 
     timerToast = setTimeout(() => {
-
         toast.hidden = true;
-
     }, 2300);
 }
 
@@ -140,34 +126,25 @@ function registrarEvento(
     ean = null,
     quantidade = 1
 ) {
-
     historico.push({
-
         id: Date.now(),
-
         tipo: tipo,
-
         nome: nome,
-
         ean: ean,
-
         quantidade: quantidade,
-
         data: new Date().toISOString()
     });
-
 
     salvarHistorico();
 
     atualizarHistorico();
     atualizarResumo();
+    atualizarPrevisoes();
 }
 
 
 function formatarData(dataISO) {
-
-    const data =
-        new Date(dataISO);
+    const data = new Date(dataISO);
 
     return data.toLocaleString(
         "pt-BR",
@@ -183,19 +160,14 @@ function formatarData(dataISO) {
 
 
 function atualizarHistorico() {
-
     const historicoBox =
         el("historicoBox");
 
-    if (!historicoBox) {
-        return;
-    }
+    if (!historicoBox) return;
 
     historicoBox.innerHTML = "";
 
-
     if (historico.length === 0) {
-
         historicoBox.innerHTML = `
             <div class="estado-vazio">
                 Nenhum evento registrado
@@ -205,34 +177,27 @@ function atualizarHistorico() {
         return;
     }
 
-
     const eventos =
         [...historico].reverse();
 
-
     eventos.forEach(evento => {
-
         const linha =
             document.createElement("div");
 
         linha.className =
             "evento-historico";
 
-
         const classeTipo =
             evento.tipo === "acabou"
                 ? "acabou"
                 : "comprado";
-
 
         const textoTipo =
             evento.tipo === "acabou"
                 ? "ACABOU"
                 : "COMPRADO";
 
-
         linha.innerHTML = `
-
             <div class="evento-principal">
 
                 <span
@@ -247,239 +212,109 @@ function atualizarHistorico() {
 
                 ${
                     evento.quantidade > 1
-                    ? `
-                        <span class="evento-quantidade">
-                            x${evento.quantidade}
-                        </span>
-                      `
-                    : ""
+                        ? `
+                            <span class="evento-quantidade">
+                                x${evento.quantidade}
+                            </span>
+                          `
+                        : ""
                 }
 
             </div>
-
 
             <div class="evento-data">
                 ${formatarData(evento.data)}
             </div>
         `;
 
-
-        historicoBox.appendChild(
-            linha
-        );
+        historicoBox.appendChild(linha);
     });
 }
 
 
-function alternarHistorico() {
-
-    const areaHistorico =
-        el("areaHistorico");
-
-    const areaProdutos =
-        el("areaProdutos");
-
-    const areaResumo =
-        el("areaResumo");
-
-    const botaoHistorico =
-        el("botaoHistorico");
-
-    const botaoProdutos =
-        el("botaoProdutos");
-
-    const botaoResumo =
-        el("botaoResumo");
-
-
-    if (!areaHistorico) {
-        return;
-    }
-
-
-    const abrir =
-        areaHistorico.hidden;
-
-
-    areaHistorico.hidden =
-        !abrir;
-
-
-    if (botaoHistorico) {
-
-        botaoHistorico.textContent =
-            abrir
-                ? "Ocultar histórico"
-                : "Histórico";
-    }
-
-
-    if (abrir) {
-
-        atualizarHistorico();
-
-        if (areaProdutos) {
-            areaProdutos.hidden = true;
-        }
-
-        if (areaResumo) {
-            areaResumo.hidden = true;
-        }
-
-        if (botaoProdutos) {
-            botaoProdutos.textContent =
-                "Produtos cadastrados";
-        }
-
-        if (botaoResumo) {
-            botaoResumo.textContent =
-                "Resumo de consumo";
-        }
-    }
-}
-
-
-function limparHistorico() {
-
-    if (historico.length === 0) {
-        return;
-    }
-
-
-    const confirmar =
-        confirm(
-            "Apagar todo o histórico?"
-        );
-
-
-    if (!confirmar) {
-        return;
-    }
-
-
-    historico = [];
-
-    salvarHistorico();
-
-    atualizarHistorico();
-    atualizarResumo();
-}
-
-
 // ==========================================
-// RESUMO / INTELIGÊNCIA
+// CÁLCULOS
 // ==========================================
 
 function diferencaDias(
     dataInicial,
     dataFinal
 ) {
-
     const inicio =
         new Date(dataInicial);
 
     const fim =
         new Date(dataFinal);
 
-    const diferenca =
-        fim - inicio;
-
-    return diferenca /
-        (1000 * 60 * 60 * 24);
+    return (
+        fim - inicio
+    ) / (1000 * 60 * 60 * 24);
 }
 
 
-function formatarDuracao(dias) {
-
-    if (
-        dias === null ||
-        dias === undefined
-    ) {
-        return "Sem dados suficientes";
+function media(valores) {
+    if (valores.length === 0) {
+        return null;
     }
 
+    return (
+        valores.reduce(
+            (total, valor) =>
+                total + valor,
+            0
+        ) / valores.length
+    );
+}
 
-    if (dias < 1) {
 
-        const horas =
-            dias * 24;
-
-        if (horas < 1) {
-
-            const minutos =
-                Math.max(
-                    1,
-                    Math.round(
-                        horas * 60
-                    )
+function eventosDoProduto(produto) {
+    return historico
+        .filter(evento => {
+            if (
+                produto.ean &&
+                evento.ean
+            ) {
+                return (
+                    produto.ean ===
+                    evento.ean
                 );
+            }
 
-            return `${minutos} min`;
-        }
-
-
-        return `${horas.toFixed(1)} h`;
-    }
-
-
-    return `${dias.toFixed(1)} dias`;
+            return (
+                produto.nome.toLowerCase() ===
+                evento.nome.toLowerCase()
+            );
+        })
+        .sort(
+            (a, b) =>
+                new Date(a.data) -
+                new Date(b.data)
+        );
 }
 
 
 function calcularResumoProduto(produto) {
-
     const eventos =
-        historico
-            .filter(evento => {
-
-                if (
-                    produto.ean &&
-                    evento.ean
-                ) {
-
-                    return (
-                        evento.ean ===
-                        produto.ean
-                    );
-                }
-
-
-                return (
-                    evento.nome
-                        .toLowerCase() ===
-                    produto.nome
-                        .toLowerCase()
-                );
-            })
-            .sort(
-                (a, b) =>
-                    new Date(a.data) -
-                    new Date(b.data)
-            );
-
+        eventosDoProduto(produto);
 
     const duracoes = [];
     const reposicoes = [];
-
 
     for (
         let i = 0;
         i < eventos.length - 1;
         i++
     ) {
-
         const atual =
             eventos[i];
 
         const proximo =
             eventos[i + 1];
 
-
         if (
             atual.tipo === "comprado" &&
             proximo.tipo === "acabou"
         ) {
-
             duracoes.push(
                 diferencaDias(
                     atual.data,
@@ -488,12 +323,10 @@ function calcularResumoProduto(produto) {
             );
         }
 
-
         if (
             atual.tipo === "acabou" &&
             proximo.tipo === "comprado"
         ) {
-
             reposicoes.push(
                 diferencaDias(
                     atual.data,
@@ -503,30 +336,14 @@ function calcularResumoProduto(produto) {
         }
     }
 
-
-    function media(valores) {
-
-        if (valores.length === 0) {
-            return null;
-        }
-
-
-        return valores.reduce(
-            (total, valor) =>
-                total + valor,
-            0
-        ) / valores.length;
-    }
-
-
     const ultimoEvento =
-        eventos.length > 0
-            ? eventos[eventos.length - 1]
+        eventos.length
+            ? eventos[
+                eventos.length - 1
+              ]
             : null;
 
-
     return {
-
         duracaoMedia:
             media(duracoes),
 
@@ -545,24 +362,361 @@ function calcularResumoProduto(produto) {
 }
 
 
-function atualizarResumo() {
+function formatarDuracao(dias) {
+    if (
+        dias === null ||
+        dias === undefined
+    ) {
+        return "Sem dados suficientes";
+    }
 
-    const resumoBox =
-        el("resumoBox");
+    if (dias < 1) {
+        const horas =
+            dias * 24;
 
-    if (!resumoBox) {
+        if (horas < 1) {
+            const minutos =
+                Math.max(
+                    1,
+                    Math.round(
+                        horas * 60
+                    )
+                );
+
+            return `${minutos} min`;
+        }
+
+        return `${horas.toFixed(1)} h`;
+    }
+
+    return `${dias.toFixed(1)} dias`;
+}
+
+
+// ==========================================
+// LISTA DE TODOS OS PRODUTOS CONHECIDOS
+// ==========================================
+
+function obterProdutosConhecidos() {
+    const resultado =
+        produtos.map(produto => ({
+            nome: produto.nome,
+            ean: produto.ean || null
+        }));
+
+    historico.forEach(evento => {
+        const existe =
+            resultado.find(produto => {
+                if (
+                    produto.ean &&
+                    evento.ean
+                ) {
+                    return (
+                        produto.ean ===
+                        evento.ean
+                    );
+                }
+
+                return (
+                    produto.nome.toLowerCase() ===
+                    evento.nome.toLowerCase()
+                );
+            });
+
+        if (!existe) {
+            resultado.push({
+                nome: evento.nome,
+                ean: evento.ean || null
+            });
+        }
+    });
+
+    return resultado;
+}
+
+
+// ==========================================
+// PREVISÕES
+// ==========================================
+
+function calcularPrevisao(produto) {
+    const resumo =
+        calcularResumoProduto(produto);
+
+    if (
+        resumo.duracaoMedia === null ||
+        !resumo.ultimoEvento
+    ) {
+        return null;
+    }
+
+    /*
+        Só conseguimos prever consumo quando
+        o último evento é uma COMPRA.
+
+        Se o último evento for ACABOU,
+        o produto já está pendente de reposição.
+    */
+
+    if (
+        resumo.ultimoEvento.tipo !==
+        "comprado"
+    ) {
+        return {
+            produto: produto,
+            situacao: "acabou",
+            diasRestantes: 0,
+            dataPrevista: null,
+            duracaoMedia:
+                resumo.duracaoMedia
+        };
+    }
+
+    const dataCompra =
+        new Date(
+            resumo.ultimoEvento.data
+        );
+
+    const milissegundosDuracao =
+        resumo.duracaoMedia *
+        24 *
+        60 *
+        60 *
+        1000;
+
+    const dataPrevista =
+        new Date(
+            dataCompra.getTime() +
+            milissegundosDuracao
+        );
+
+    const agora =
+        new Date();
+
+    const diasRestantes =
+        (
+            dataPrevista - agora
+        ) /
+        (
+            1000 *
+            60 *
+            60 *
+            24
+        );
+
+    let situacao =
+        "normal";
+
+    const limiteAtencao =
+        Math.max(
+            1,
+            resumo.duracaoMedia * 0.20
+        );
+
+    if (diasRestantes <= 0) {
+        situacao =
+            "provavel";
+    } else if (
+        diasRestantes <=
+        limiteAtencao
+    ) {
+        situacao =
+            "atencao";
+    }
+
+    return {
+        produto: produto,
+        situacao: situacao,
+        diasRestantes:
+            diasRestantes,
+        dataPrevista:
+            dataPrevista,
+        duracaoMedia:
+            resumo.duracaoMedia
+    };
+}
+
+
+function textoPrevisao(previsao) {
+    if (
+        previsao.situacao ===
+        "acabou"
+    ) {
+        return "Já está na lista de compras";
+    }
+
+    const dias =
+        previsao.diasRestantes;
+
+    if (dias <= 0) {
+        const atraso =
+            Math.abs(dias);
+
+        if (atraso < 1) {
+            return "Pode estar acabando hoje";
+        }
+
+        return (
+            `Previsão vencida há ` +
+            `${Math.round(atraso)} dia(s)`
+        );
+    }
+
+    if (dias < 1) {
+        return "Pode acabar hoje";
+    }
+
+    if (dias < 2) {
+        return "Pode acabar amanhã";
+    }
+
+    return (
+        `Estimativa: ${Math.ceil(dias)} dias`
+    );
+}
+
+
+function tituloSituacao(situacao) {
+    if (situacao === "acabou") {
+        return "NA LISTA";
+    }
+
+    if (situacao === "provavel") {
+        return "PROVÁVEL";
+    }
+
+    if (situacao === "atencao") {
+        return "ATENÇÃO";
+    }
+
+    return "NORMAL";
+}
+
+
+function atualizarPrevisoes() {
+    const previsoesBox =
+        el("previsoesBox");
+
+    if (!previsoesBox) return;
+
+    previsoesBox.innerHTML = "";
+
+    const produtosConhecidos =
+        obterProdutosConhecidos();
+
+    const previsoes =
+        produtosConhecidos
+            .map(produto =>
+                calcularPrevisao(produto)
+            )
+            .filter(previsao =>
+                previsao !== null
+            );
+
+    if (previsoes.length === 0) {
+        previsoesBox.innerHTML = `
+            <div class="estado-previsao-vazio">
+                Ainda preciso observar pelo menos um ciclo
+                <strong>comprado → acabou</strong>
+                para começar a prever.
+            </div>
+        `;
+
         return;
     }
 
+    previsoes.sort((a, b) => {
+        if (
+            a.situacao === "acabou" &&
+            b.situacao !== "acabou"
+        ) {
+            return -1;
+        }
+
+        if (
+            b.situacao === "acabou" &&
+            a.situacao !== "acabou"
+        ) {
+            return 1;
+        }
+
+        return (
+            a.diasRestantes -
+            b.diasRestantes
+        );
+    });
+
+
+    /*
+        Na tela inicial não precisamos mostrar
+        uma lista enorme de produtos normais.
+
+        Mostramos os 5 mais próximos.
+    */
+
+    const principais =
+        previsoes.slice(0, 5);
+
+
+    principais.forEach(previsao => {
+        const linha =
+            document.createElement("div");
+
+        linha.className =
+            "previsao-item";
+
+        linha.innerHTML = `
+            <div class="previsao-info">
+
+                <strong>
+                    ${previsao.produto.nome}
+                </strong>
+
+                <span>
+                    ${textoPrevisao(previsao)}
+                </span>
+
+            </div>
+
+            <span
+                class="
+                    previsao-status
+                    ${previsao.situacao}
+                "
+            >
+                ${
+                    tituloSituacao(
+                        previsao.situacao
+                    )
+                }
+            </span>
+        `;
+
+        previsoesBox.appendChild(
+            linha
+        );
+    });
+}
+
+
+// ==========================================
+// RESUMO
+// ==========================================
+
+function atualizarResumo() {
+    const resumoBox =
+        el("resumoBox");
+
+    if (!resumoBox) return;
 
     resumoBox.innerHTML = "";
 
+    const produtosConhecidos =
+        obterProdutosConhecidos();
 
     if (
-        produtos.length === 0 &&
-        historico.length === 0
+        produtosConhecidos.length === 0
     ) {
-
         resumoBox.innerHTML = `
             <div class="estado-vazio">
                 Ainda não há dados suficientes
@@ -573,73 +727,23 @@ function atualizarResumo() {
     }
 
 
-    let produtosResumo =
-        [...produtos];
-
-
-    historico.forEach(evento => {
-
-        const existe =
-            produtosResumo.find(produto => {
-
-                if (
-                    evento.ean &&
-                    produto.ean
-                ) {
-
-                    return (
-                        evento.ean ===
-                        produto.ean
-                    );
-                }
-
-
-                return (
-                    produto.nome
-                        .toLowerCase() ===
-                    evento.nome
-                        .toLowerCase()
-                );
-            });
-
-
-        if (!existe) {
-
-            produtosResumo.push({
-
-                nome: evento.nome,
-
-                ean:
-                    evento.ean || null
-            });
-        }
-    });
-
-
-    produtosResumo.forEach(produto => {
-
+    produtosConhecidos.forEach(produto => {
         const resumo =
-            calcularResumoProduto(
-                produto
-            );
+            calcularResumoProduto(produto);
 
+        const previsao =
+            calcularPrevisao(produto);
 
         const card =
-            document.createElement(
-                "div"
-            );
-
+            document.createElement("div");
 
         card.className =
             "resumo-produto";
 
-
         let ultimoTexto =
             "Nenhum evento";
 
-
         if (resumo.ultimoEvento) {
-
             ultimoTexto =
                 resumo.ultimoEvento.tipo ===
                 "acabou"
@@ -647,9 +751,21 @@ function atualizarResumo() {
                     : "COMPRADO";
         }
 
+        let previsaoHTML = `
+            <div class="previsao-resumo">
+                Previsão ainda indisponível
+            </div>
+        `;
+
+        if (previsao) {
+            previsaoHTML = `
+                <div class="previsao-resumo">
+                    ${textoPrevisao(previsao)}
+                </div>
+            `;
+        }
 
         card.innerHTML = `
-
             <div class="resumo-topo">
 
                 <strong>
@@ -700,6 +816,8 @@ function atualizarResumo() {
 
             </div>
 
+            ${previsaoHTML}
+
 
             <div class="resumo-rodape">
 
@@ -716,90 +834,16 @@ function atualizarResumo() {
             </div>
         `;
 
-
-        resumoBox.appendChild(
-            card
-        );
+        resumoBox.appendChild(card);
     });
 }
 
 
-function alternarResumo() {
-
-    const areaResumo =
-        el("areaResumo");
-
-    const areaHistorico =
-        el("areaHistorico");
-
-    const areaProdutos =
-        el("areaProdutos");
-
-    const botaoResumo =
-        el("botaoResumo");
-
-    const botaoHistorico =
-        el("botaoHistorico");
-
-    const botaoProdutos =
-        el("botaoProdutos");
-
-
-    if (!areaResumo) {
-        return;
-    }
-
-
-    const abrir =
-        areaResumo.hidden;
-
-
-    areaResumo.hidden =
-        !abrir;
-
-
-    if (botaoResumo) {
-
-        botaoResumo.textContent =
-            abrir
-                ? "Ocultar resumo"
-                : "Resumo de consumo";
-    }
-
-
-    if (abrir) {
-
-        atualizarResumo();
-
-
-        if (areaHistorico) {
-            areaHistorico.hidden = true;
-        }
-
-        if (areaProdutos) {
-            areaProdutos.hidden = true;
-        }
-
-
-        if (botaoHistorico) {
-            botaoHistorico.textContent =
-                "Histórico";
-        }
-
-        if (botaoProdutos) {
-            botaoProdutos.textContent =
-                "Produtos cadastrados";
-        }
-    }
-}
-
-
 // ==========================================
-// LISTA
+// LISTA DE COMPRAS
 // ==========================================
 
 function totalItens() {
-
     return itens.reduce(
         (total, item) =>
             total + item.quantidade,
@@ -809,30 +853,22 @@ function totalItens() {
 
 
 function atualizarLista() {
-
     const lista =
         el("lista");
 
     const contador =
         el("contador");
 
-
-    if (!lista) {
-        return;
-    }
-
+    if (!lista) return;
 
     lista.innerHTML = "";
-
 
     if (contador) {
         contador.textContent =
             totalItens();
     }
 
-
     if (itens.length === 0) {
-
         lista.innerHTML = `
             <div class="estado-vazio">
                 Nenhum item na lista
@@ -842,22 +878,14 @@ function atualizarLista() {
         return;
     }
 
-
     itens.forEach(
         (item, indice) => {
-
             const linha =
-                document.createElement(
-                    "div"
-                );
+                document.createElement("div");
 
-
-            linha.className =
-                "item";
-
+            linha.className = "item";
 
             linha.innerHTML = `
-
                 <div class="item-dados">
 
                     <span class="item-nome">
@@ -869,7 +897,6 @@ function atualizarLista() {
                     </span>
 
                 </div>
-
 
                 <div class="item-acoes">
 
@@ -900,10 +927,7 @@ function atualizarLista() {
                 </div>
             `;
 
-
-            lista.appendChild(
-                linha
-            );
+            lista.appendChild(linha);
         }
     );
 }
@@ -914,53 +938,37 @@ function adicionarItem(
     ean = null,
     registrar = true
 ) {
-
-    nome =
-        nome.trim();
-
+    nome = nome.trim();
 
     const existente =
         itens.find(
             item =>
-                item.nome
-                    .toLowerCase() ===
-                nome
-                    .toLowerCase()
+                item.nome.toLowerCase() ===
+                nome.toLowerCase()
         );
 
-
     if (existente) {
-
         existente.quantidade++;
-
 
         if (
             !existente.ean &&
             ean
         ) {
-
             existente.ean =
                 ean;
         }
 
     } else {
-
         itens.push({
-
             nome: nome,
-
             quantidade: 1,
-
             ean: ean
         });
     }
 
-
     salvarLista();
 
-
     if (registrar) {
-
         registrarEvento(
             "acabou",
             nome,
@@ -969,58 +977,42 @@ function adicionarItem(
         );
     }
 
-
     atualizarLista();
+    atualizarPrevisoes();
 }
 
 
 function lidarCliqueLista(event) {
-
     const botao =
         event.target.closest(
             "[data-acao]"
         );
 
-
-    if (!botao) {
-        return;
-    }
-
+    if (!botao) return;
 
     const indice =
         Number(
             botao.dataset.indice
         );
 
-
     const acao =
         botao.dataset.acao;
-
 
     const item =
         itens[indice];
 
-
-    if (!item) {
-        return;
-    }
+    if (!item) return;
 
 
     if (acao === "mais") {
-
         item.quantidade++;
     }
 
 
     if (acao === "menos") {
-
         item.quantidade--;
 
-
-        if (
-            item.quantidade <= 0
-        ) {
-
+        if (item.quantidade <= 0) {
             itens.splice(
                 indice,
                 1
@@ -1029,10 +1021,7 @@ function lidarCliqueLista(event) {
     }
 
 
-    if (
-        acao === "comprado"
-    ) {
-
+    if (acao === "comprado") {
         registrarEvento(
             "comprado",
             item.nome,
@@ -1040,12 +1029,10 @@ function lidarCliqueLista(event) {
             item.quantidade
         );
 
-
         itens.splice(
             indice,
             1
         );
-
 
         mostrarMensagem(
             `${item.nome} marcado como comprado`
@@ -1055,31 +1042,29 @@ function lidarCliqueLista(event) {
 
     salvarLista();
     atualizarLista();
+    atualizarPrevisoes();
 }
 
 
 function limparLista() {
-
     if (itens.length === 0) {
         return;
     }
-
 
     const confirmar =
         confirm(
             "Limpar toda a lista?"
         );
 
-
     if (!confirmar) {
         return;
     }
-
 
     itens = [];
 
     salvarLista();
     atualizarLista();
+    atualizarPrevisoes();
 }
 
 
@@ -1088,7 +1073,6 @@ function limparLista() {
 // ==========================================
 
 function buscarProdutoPorEAN(ean) {
-
     return produtos.find(
         produto =>
             produto.ean === ean
@@ -1097,23 +1081,14 @@ function buscarProdutoPorEAN(ean) {
 
 
 function atualizarProdutos() {
-
     const produtosBox =
         el("produtosBox");
 
-
-    if (!produtosBox) {
-        return;
-    }
-
+    if (!produtosBox) return;
 
     produtosBox.innerHTML = "";
 
-
-    if (
-        produtos.length === 0
-    ) {
-
+    if (produtos.length === 0) {
         produtosBox.innerHTML = `
             <div class="estado-vazio">
                 Nenhum produto cadastrado
@@ -1123,52 +1098,36 @@ function atualizarProdutos() {
         return;
     }
 
+    produtos.forEach(produto => {
+        const linha =
+            document.createElement("div");
 
-    produtos.forEach(
-        produto => {
+        linha.className =
+            "produto-cadastrado";
 
-            const linha =
-                document.createElement(
-                    "div"
-                );
+        linha.innerHTML = `
+            <strong>
+                ${produto.nome}
+            </strong>
 
+            <span>
+                EAN ${produto.ean}
+            </span>
+        `;
 
-            linha.className =
-                "produto-cadastrado";
-
-
-            linha.innerHTML = `
-
-                <strong>
-                    ${produto.nome}
-                </strong>
-
-                <span>
-                    EAN ${produto.ean}
-                </span>
-            `;
-
-
-            produtosBox.appendChild(
-                linha
-            );
-        }
-    );
+        produtosBox.appendChild(
+            linha
+        );
+    });
 }
 
 
 function processarEAN(ean) {
-
     ean =
         String(ean)
-            .replace(
-                /\D/g,
-                ""
-            );
-
+            .replace(/\D/g, "");
 
     if (!ean) {
-
         mostrarMensagem(
             "Código inválido"
         );
@@ -1176,20 +1135,14 @@ function processarEAN(ean) {
         return;
     }
 
-
     const produto =
-        buscarProdutoPorEAN(
-            ean
-        );
-
+        buscarProdutoPorEAN(ean);
 
     if (produto) {
-
         adicionarItem(
             produto.nome,
             ean
         );
-
 
         mostrarMensagem(
             `${produto.nome} adicionado`
@@ -1198,44 +1151,32 @@ function processarEAN(ean) {
         return;
     }
 
-
-    const nome =
-        prompt(
-            `Produto ainda não cadastrado.\n\nEAN: ${ean}\n\nNome do produto:`
-        );
-
+    const nome = prompt(
+        `Produto ainda não cadastrado.\n\nEAN: ${ean}\n\nNome do produto:`
+    );
 
     if (
         !nome ||
         !nome.trim()
     ) {
-
         return;
     }
-
 
     const nomeLimpo =
         nome.trim();
 
-
     produtos.push({
-
         ean: ean,
-
-        nome:
-            nomeLimpo
+        nome: nomeLimpo
     });
-
 
     salvarProdutos();
     atualizarProdutos();
-
 
     adicionarItem(
         nomeLimpo,
         ean
     );
-
 
     mostrarMensagem(
         `${nomeLimpo} cadastrado e adicionado`
@@ -1244,40 +1185,29 @@ function processarEAN(ean) {
 
 
 function adicionarPorCodigo() {
-
     const entrada =
         prompt(
             "Digite o código de barras:"
         );
 
+    if (!entrada) return;
 
-    if (!entrada) {
-        return;
-    }
-
-
-    processarEAN(
-        entrada
-    );
+    processarEAN(entrada);
 }
 
 
 function adicionarManualmente() {
-
     const nome =
         prompt(
             "Nome do produto:"
         );
 
-
     if (
         !nome ||
         !nome.trim()
     ) {
-
         return;
     }
-
 
     adicionarItem(
         nome.trim(),
@@ -1286,74 +1216,183 @@ function adicionarManualmente() {
 }
 
 
-function alternarProdutos() {
+// ==========================================
+// PAINÉIS
+// ==========================================
 
-    const areaProdutos =
-        el("areaProdutos");
+function fecharOutrosPaineis(excecao) {
+    const areas = {
+        resumo:
+            el("areaResumo"),
 
-    const areaHistorico =
-        el("areaHistorico");
+        historico:
+            el("areaHistorico"),
 
-    const areaResumo =
-        el("areaResumo");
+        produtos:
+            el("areaProdutos")
+    };
 
+    const botoes = {
+        resumo:
+            el("botaoResumo"),
 
-    const botaoProdutos =
-        el("botaoProdutos");
+        historico:
+            el("botaoHistorico"),
 
-    const botaoHistorico =
-        el("botaoHistorico");
+        produtos:
+            el("botaoProdutos")
+    };
 
-    const botaoResumo =
-        el("botaoResumo");
+    Object.keys(areas).forEach(nome => {
+        if (
+            nome !== excecao &&
+            areas[nome]
+        ) {
+            areas[nome].hidden = true;
+        }
+    });
 
-
-    if (!areaProdutos) {
-        return;
+    if (
+        excecao !== "resumo" &&
+        botoes.resumo
+    ) {
+        botoes.resumo.textContent =
+            "Resumo de consumo";
     }
 
+    if (
+        excecao !== "historico" &&
+        botoes.historico
+    ) {
+        botoes.historico.textContent =
+            "Histórico";
+    }
+
+    if (
+        excecao !== "produtos" &&
+        botoes.produtos
+    ) {
+        botoes.produtos.textContent =
+            "Produtos cadastrados";
+    }
+}
+
+
+function alternarResumo() {
+    const area =
+        el("areaResumo");
+
+    const botao =
+        el("botaoResumo");
+
+    if (!area) return;
 
     const abrir =
-        areaProdutos.hidden;
+        area.hidden;
 
-
-    areaProdutos.hidden =
+    area.hidden =
         !abrir;
 
+    if (botao) {
+        botao.textContent =
+            abrir
+                ? "Ocultar resumo"
+                : "Resumo de consumo";
+    }
 
-    if (botaoProdutos) {
+    if (abrir) {
+        fecharOutrosPaineis(
+            "resumo"
+        );
 
-        botaoProdutos.textContent =
+        atualizarResumo();
+    }
+}
+
+
+function alternarHistorico() {
+    const area =
+        el("areaHistorico");
+
+    const botao =
+        el("botaoHistorico");
+
+    if (!area) return;
+
+    const abrir =
+        area.hidden;
+
+    area.hidden =
+        !abrir;
+
+    if (botao) {
+        botao.textContent =
+            abrir
+                ? "Ocultar histórico"
+                : "Histórico";
+    }
+
+    if (abrir) {
+        fecharOutrosPaineis(
+            "historico"
+        );
+
+        atualizarHistorico();
+    }
+}
+
+
+function alternarProdutos() {
+    const area =
+        el("areaProdutos");
+
+    const botao =
+        el("botaoProdutos");
+
+    if (!area) return;
+
+    const abrir =
+        area.hidden;
+
+    area.hidden =
+        !abrir;
+
+    if (botao) {
+        botao.textContent =
             abrir
                 ? "Ocultar produtos cadastrados"
                 : "Produtos cadastrados";
     }
 
-
     if (abrir) {
+        fecharOutrosPaineis(
+            "produtos"
+        );
 
         atualizarProdutos();
-
-
-        if (areaHistorico) {
-            areaHistorico.hidden = true;
-        }
-
-        if (areaResumo) {
-            areaResumo.hidden = true;
-        }
-
-
-        if (botaoHistorico) {
-            botaoHistorico.textContent =
-                "Histórico";
-        }
-
-        if (botaoResumo) {
-            botaoResumo.textContent =
-                "Resumo de consumo";
-        }
     }
+}
+
+
+function limparHistorico() {
+    if (historico.length === 0) {
+        return;
+    }
+
+    const confirmar =
+        confirm(
+            "Apagar todo o histórico?"
+        );
+
+    if (!confirmar) return;
+
+    historico = [];
+
+    salvarHistorico();
+
+    atualizarHistorico();
+    atualizarResumo();
+    atualizarPrevisoes();
 }
 
 
@@ -1362,16 +1401,13 @@ function alternarProdutos() {
 // ==========================================
 
 async function abrirScanner() {
-
     const scannerModal =
         el("scannerModal");
-
 
     if (
         typeof Html5Qrcode ===
         "undefined"
     ) {
-
         alert(
             "O leitor de código de barras não foi carregado."
         );
@@ -1379,28 +1415,18 @@ async function abrirScanner() {
         return;
     }
 
+    if (!scannerModal) return;
 
-    if (!scannerModal) {
-        return;
-    }
+    scannerModal.hidden = false;
 
-
-    scannerModal.hidden =
-        false;
-
-
-    leituraEmAndamento =
-        false;
-
+    leituraEmAndamento = false;
 
     scanner =
         new Html5Qrcode(
             "reader"
         );
 
-
     const configuracao = {
-
         fps: 10,
 
         qrbox: {
@@ -1409,15 +1435,10 @@ async function abrirScanner() {
         }
     };
 
-
     try {
-
-        scannerAtivo =
-            true;
-
+        scannerAtivo = true;
 
         await scanner.start(
-
             {
                 facingMode:
                     "environment"
@@ -1426,30 +1447,21 @@ async function abrirScanner() {
             configuracao,
 
             async decodedText => {
-
                 if (
                     leituraEmAndamento
                 ) {
                     return;
                 }
 
-
-                leituraEmAndamento =
-                    true;
-
+                leituraEmAndamento = true;
 
                 if (
                     navigator.vibrate
                 ) {
-
-                    navigator.vibrate(
-                        120
-                    );
+                    navigator.vibrate(120);
                 }
 
-
                 await fecharScanner();
-
 
                 processarEAN(
                     decodedText
@@ -1462,20 +1474,14 @@ async function abrirScanner() {
         );
 
     } catch (erro) {
-
         console.error(
             "Erro na câmera:",
             erro
         );
 
+        scannerAtivo = false;
 
-        scannerAtivo =
-            false;
-
-
-        scannerModal.hidden =
-            true;
-
+        scannerModal.hidden = true;
 
         alert(
             "Não foi possível abrir a câmera."
@@ -1485,53 +1491,36 @@ async function abrirScanner() {
 
 
 async function fecharScanner() {
-
     const scannerModal =
         el("scannerModal");
-
 
     if (
         scanner &&
         scannerAtivo
     ) {
-
         try {
-
             await scanner.stop();
-
         } catch (erro) {
-
             console.log(
                 "Scanner já estava parado."
             );
         }
     }
 
-
-    scannerAtivo =
-        false;
-
+    scannerAtivo = false;
 
     if (scanner) {
-
         try {
-
             scanner.clear();
-
         } catch {
-            // Ignora
+            // Ignora.
         }
     }
 
-
-    scanner =
-        null;
-
+    scanner = null;
 
     if (scannerModal) {
-
-        scannerModal.hidden =
-            true;
+        scannerModal.hidden = true;
     }
 }
 
@@ -1541,40 +1530,10 @@ async function fecharScanner() {
 // ==========================================
 
 function configurarEventos() {
-
     const lista =
         el("lista");
 
-    const botaoAdicionar =
-        el("botaoAdicionar");
-
-    const botaoCodigo =
-        el("botaoCodigo");
-
-    const botaoScanner =
-        el("botaoScanner");
-
-    const botaoFecharScanner =
-        el("botaoFecharScanner");
-
-    const botaoProdutos =
-        el("botaoProdutos");
-
-    const botaoHistorico =
-        el("botaoHistorico");
-
-    const botaoResumo =
-        el("botaoResumo");
-
-    const botaoLimpar =
-        el("botaoLimpar");
-
-    const botaoLimparHistorico =
-        el("botaoLimparHistorico");
-
-
     if (lista) {
-
         lista.addEventListener(
             "click",
             lidarCliqueLista
@@ -1582,97 +1541,71 @@ function configurarEventos() {
     }
 
 
-    if (botaoAdicionar) {
-
-        botaoAdicionar.addEventListener(
-            "click",
+    const eventos = [
+        [
+            "botaoAdicionar",
             adicionarManualmente
-        );
-    }
-
-
-    if (botaoCodigo) {
-
-        botaoCodigo.addEventListener(
-            "click",
+        ],
+        [
+            "botaoCodigo",
             adicionarPorCodigo
-        );
-    }
-
-
-    if (botaoScanner) {
-
-        botaoScanner.addEventListener(
-            "click",
+        ],
+        [
+            "botaoScanner",
             abrirScanner
-        );
-    }
-
-
-    if (botaoFecharScanner) {
-
-        botaoFecharScanner.addEventListener(
-            "click",
+        ],
+        [
+            "botaoFecharScanner",
             fecharScanner
-        );
-    }
-
-
-    if (botaoProdutos) {
-
-        botaoProdutos.addEventListener(
-            "click",
-            alternarProdutos
-        );
-    }
-
-
-    if (botaoHistorico) {
-
-        botaoHistorico.addEventListener(
-            "click",
-            alternarHistorico
-        );
-    }
-
-
-    if (botaoResumo) {
-
-        botaoResumo.addEventListener(
-            "click",
+        ],
+        [
+            "botaoResumo",
             alternarResumo
-        );
-    }
-
-
-    if (botaoLimpar) {
-
-        botaoLimpar.addEventListener(
-            "click",
+        ],
+        [
+            "botaoHistorico",
+            alternarHistorico
+        ],
+        [
+            "botaoProdutos",
+            alternarProdutos
+        ],
+        [
+            "botaoLimpar",
             limparLista
-        );
-    }
-
-
-    if (botaoLimparHistorico) {
-
-        botaoLimparHistorico.addEventListener(
-            "click",
+        ],
+        [
+            "botaoLimparHistorico",
             limparHistorico
-        );
-    }
+        ]
+    ];
+
+
+    eventos.forEach(
+        ([id, funcao]) => {
+            const elemento =
+                el(id);
+
+            if (elemento) {
+                elemento.addEventListener(
+                    "click",
+                    funcao
+                );
+            }
+        }
+    );
 }
 
 
 // ==========================================
-// FUNÇÕES GLOBAIS
+// GLOBAIS
 // ==========================================
+
+window.alternarResumo =
+    alternarResumo;
 
 window.alternarHistorico =
     alternarHistorico;
 
 window.alternarProdutos =
     alternarProdutos;
-
-window.alternarResumo =
-    alternarResumo;

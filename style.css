@@ -6,17 +6,21 @@
 :root {
     --fundo: #f3f2ed;
     --card: #ffffff;
+
     --texto: #20211f;
     --secundario: #85867f;
     --borda: #e6e5df;
 
     --escuro: #20221f;
+
     --verde: #607b63;
     --verde-claro: #e6eee5;
-    --creme: #f3efe3;
 
-    --vermelho-claro: #f5e6e4;
+    --amarelo: #9b7938;
+    --amarelo-claro: #f3ead5;
+
     --vermelho: #9b5149;
+    --vermelho-claro: #f5e6e4;
 }
 
 
@@ -57,6 +61,8 @@ button {
         46px;
 }
 
+
+/* TOPO */
 
 .topo {
     display: flex;
@@ -124,6 +130,8 @@ button {
 }
 
 
+/* CARDS */
+
 .card {
     padding: 20px;
 
@@ -146,6 +154,8 @@ button {
 
     align-items: center;
 
+    gap: 10px;
+
     margin-bottom: 8px;
 }
 
@@ -154,6 +164,16 @@ button {
     margin: 0;
 
     font-size: 18px;
+}
+
+
+.subtitulo-card {
+    margin: 4px 0 0;
+
+    color:
+        var(--secundario);
+
+    font-size: 11px;
 }
 
 
@@ -180,6 +200,8 @@ button {
     font-size: 14px;
 }
 
+
+/* LISTA */
 
 .item {
     min-height: 64px;
@@ -270,6 +292,121 @@ button {
     color: white;
 }
 
+
+/* PREVISÕES */
+
+.previsoes-card {
+    margin-top: 14px;
+}
+
+
+.estado-previsao-vazio {
+    padding: 21px 5px 7px;
+
+    color: #999;
+
+    text-align: center;
+
+    font-size: 12px;
+
+    line-height: 1.55;
+}
+
+
+.estado-previsao-vazio strong {
+    color: #777;
+}
+
+
+.previsao-item {
+    min-height: 60px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content:
+        space-between;
+
+    gap: 12px;
+
+    border-bottom:
+        1px solid
+        var(--borda);
+}
+
+
+.previsao-item:last-child {
+    border-bottom: none;
+}
+
+
+.previsao-info {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 4px;
+}
+
+
+.previsao-info strong {
+    font-size: 14px;
+}
+
+
+.previsao-info span {
+    color:
+        var(--secundario);
+
+    font-size: 11px;
+}
+
+
+.previsao-status {
+    flex-shrink: 0;
+
+    padding: 5px 7px;
+
+    border-radius: 8px;
+
+    font-size: 9px;
+
+    font-weight: 800;
+
+    letter-spacing: .35px;
+}
+
+
+.previsao-status.normal {
+    background:
+        var(--verde-claro);
+
+    color:
+        var(--verde);
+}
+
+
+.previsao-status.atencao {
+    background:
+        var(--amarelo-claro);
+
+    color:
+        var(--amarelo);
+}
+
+
+.previsao-status.provavel,
+.previsao-status.acabou {
+    background:
+        var(--vermelho-claro);
+
+    color:
+        var(--vermelho);
+}
+
+
+/* AÇÕES */
 
 .acoes {
     display: grid;
@@ -551,6 +688,25 @@ button {
 }
 
 
+.previsao-resumo {
+    margin-top: 10px;
+
+    padding: 10px 12px;
+
+    border-radius: 12px;
+
+    background:
+        var(--verde-claro);
+
+    color:
+        var(--verde);
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+
 .resumo-rodape {
     display: flex;
 
@@ -595,7 +751,6 @@ button {
 
 .scanner-conteudo {
     width: 100%;
-
     max-width: 480px;
 
     padding: 20px;
@@ -679,6 +834,8 @@ button {
     display: none;
 }
 
+
+/* RODAPÉ */
 
 footer {
     margin-top: 25px;

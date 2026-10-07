@@ -9,14 +9,13 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>KIJK Pantry V1.1</title>
+    <title>KIJK Pantry V1.2</title>
 
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
 
     <meta name="theme-color" content="#171717">
 </head>
-
 
 <body>
 
@@ -36,6 +35,8 @@
 
         </header>
 
+
+        <!-- LISTA -->
 
         <section class="card">
 
@@ -62,6 +63,28 @@
 
         </section>
 
+
+        <!-- PREVISÕES -->
+
+        <section class="card previsoes-card">
+
+            <div class="card-cabecalho">
+
+                <div>
+                    <h2>Próximos a acabar</h2>
+                    <p class="subtitulo-card">
+                        Baseado no seu histórico
+                    </p>
+                </div>
+
+            </div>
+
+            <div id="previsoesBox"></div>
+
+        </section>
+
+
+        <!-- AÇÕES -->
 
         <section class="acoes">
 
@@ -119,20 +142,22 @@
         </section>
 
 
+        <!-- RESUMO -->
+
         <section
             id="areaResumo"
             class="card painel-extra"
             hidden
         >
 
-            <div class="card-cabecalho">
-                <h2>Resumo de consumo</h2>
-            </div>
+            <h2>Resumo de consumo</h2>
 
             <div id="resumoBox"></div>
 
         </section>
 
+
+        <!-- HISTÓRICO -->
 
         <section
             id="areaHistorico"
@@ -158,6 +183,8 @@
         </section>
 
 
+        <!-- PRODUTOS -->
+
         <section
             id="areaProdutos"
             class="card painel-extra"
@@ -172,11 +199,13 @@
 
 
         <footer>
-            KIJK Pantry V1.1
+            KIJK Pantry V1.2
         </footer>
 
     </main>
 
+
+    <!-- SCANNER -->
 
     <div
         id="scannerModal"
@@ -206,6 +235,8 @@
     </div>
 
 
+    <!-- MENSAGEM -->
+
     <div
         id="toast"
         class="toast"
@@ -220,31 +251,25 @@
     <script src="app.js"></script>
 
 
+    <!-- Cache continua desativado durante o desenvolvimento -->
+
     <script>
 
         if ("serviceWorker" in navigator) {
-
             navigator.serviceWorker
                 .getRegistrations()
                 .then(registrations => {
-
                     registrations.forEach(
-                        registration =>
-                            registration.unregister()
+                        registration => registration.unregister()
                     );
-
                 });
         }
 
-
         if ("caches" in window) {
-
             caches.keys().then(names => {
-
                 names.forEach(
                     name => caches.delete(name)
                 );
-
             });
         }
 
