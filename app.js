@@ -1,967 +1,2710 @@
-* {
-    box-sizing: border-box;
-}
+const VERSAO = "1.4";
 
+const CHAVE_LISTA = "kijkPantryLista";
+const CHAVE_PRODUTOS = "kijkPantryProdutos";
+const CHAVE_HISTORICO = "kijkPantryHistorico";
 
-:root {
-    --fundo: #f3f2ed;
-    --card: #ffffff;
+let itens = [];
+let produtos = [];
+let historico = [];
 
-    --texto: #20211f;
-    --secundario: #85867f;
-    --borda: #e6e5df;
+let scanner = null;
+let scannerAtivo = false;
+let leituraEmAndamento = false;
 
-    --escuro: #20221f;
+let timerToast = null;
 
-    --verde: #607b63;
-    --verde-claro: #e6eee5;
 
-    --amarelo: #9b7938;
-    --amarelo-claro: #f3ead5;
+// ==================================================
+// INICIALIZAÇÃO
+// ==================================================
 
-    --vermelho: #9b5149;
-    --vermelho-claro: #f5e6e4;
-}
+document.addEventListener("DOMContentLoaded", () => {
 
+    carregarDados();
 
-body {
-    margin: 0;
+    atualizarLista();
+    atualizarProdutos();
+    atualizarHistorico();
+    atualizarResumo();
+    atualizarPrevisoes();
 
-    background: var(--fundo);
-    color: var(--texto);
+    configurarEventos();
+});
 
-    font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
-}
 
+// ==================================================
+// ELEMENTOS
+// ==================================================
 
-button,
-input {
-    font-family: inherit;
+function el(id) {
+    return document.getElementById(id);
 }
 
 
-button {
-    -webkit-tap-highlight-color: transparent;
-}
+// ==================================================
+// ARMAZENAMENTO
+// ==================================================
 
+function carregarDados() {
 
-.app {
-    width: 100%;
-    max-width: 520px;
+    try {
 
-    margin: auto;
+        itens =
+            JSON.parse(
+                localStorage.getItem(CHAVE_LISTA)
+            ) || [];
 
-    padding: 28px 18px 46px;
-}
+        produtos =
+            JSON.parse(
+                localStorage.getItem(CHAVE_PRODUTOS)
+            ) || [];
+
+        historico =
+            JSON.parse(
+                localStorage.getItem(CHAVE_HISTORICO)
+            ) || [];
 
+    } catch (erro) {
 
-/* ==================================================
-   TOPO
-   ================================================== */
+        console.error(
+            "Erro ao carregar dados:",
+            erro
+        );
+
+        itens = [];
+        produtos = [];
+        historico = [];
+    }
+}
 
-.topo {
-    display: flex;
 
-    align-items: center;
-    justify-content: space-between;
+function salvarLista() {
 
-    margin-bottom: 26px;
+    localStorage.setItem(
+        CHAVE_LISTA,
+        JSON.stringify(itens)
+    );
 }
 
 
-.topo h1 {
-    margin: 0;
+function salvarProdutos() {
 
-    font-size: 29px;
-    letter-spacing: -1px;
+    localStorage.setItem(
+        CHAVE_PRODUTOS,
+        JSON.stringify(produtos)
+    );
 }
 
 
-.topo p {
-    margin: 4px 0 0;
+function salvarHistorico() {
 
-    color: var(--secundario);
-    font-size: 14px;
+    localStorage.setItem(
+        CHAVE_HISTORICO,
+        JSON.stringify(historico)
+    );
 }
 
 
-.contador {
-    width: 66px;
-    height: 62px;
+// ==================================================
+// MENSAGENS
+// ==================================================
 
-    border-radius: 19px;
+function mostrarMensagem(texto) {
 
-    background: var(--escuro);
-    color: white;
+    const toast = el("toast");
 
-    display: flex;
-    flex-direction: column;
+    if (!toast) {
+        return;
+    }
 
-    justify-content: center;
-    align-items: center;
-}
+    clearTimeout(timerToast);
+
+    toast.textContent = texto;
+    toast.hidden = false;
 
+    timerToast =
+        setTimeout(() => {
 
-.contador strong {
-    font-size: 21px;
+            toast.hidden = true;
+
+        }, 2300);
 }
 
 
-.contador span {
-    margin-top: 1px;
+// ==================================================
+// HISTÓRICO
+// ==================================================
 
-    font-size: 10px;
+function registrarEvento(
+    tipo,
+    nome,
+    ean = null,
+    quantidade = 1
+) {
 
-    opacity: .65;
-}
+    historico.push({
 
+        id: Date.now(),
 
-/* ==================================================
-   CARDS
-   ================================================== */
+        tipo: tipo,
 
-.card {
-    padding: 20px;
+        nome: nome,
 
-    background: var(--card);
+        ean: ean,
 
-    border-radius: 22px;
+        quantidade: quantidade,
 
-    box-shadow:
-        0 7px 25px
-        rgba(0, 0, 0, .045);
+        data: new Date().toISOString()
+    });
+
+
+    salvarHistorico();
+
+    atualizarHistorico();
+    atualizarResumo();
+    atualizarPrevisoes();
+    atualizarProdutos();
 }
 
 
-.card-cabecalho {
-    display: flex;
+function formatarData(dataISO) {
 
-    justify-content: space-between;
-    align-items: center;
+    const data =
+        new Date(dataISO);
 
-    gap: 10px;
 
-    margin-bottom: 8px;
+    return data.toLocaleString(
+        "pt-BR",
+        {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+        }
+    );
 }
 
 
-.card h2 {
-    margin: 0;
+function formatarDataCurta(dataISO) {
 
-    font-size: 18px;
-}
+    if (!dataISO) {
+        return "Sem movimentação";
+    }
 
 
-.subtitulo-card {
-    margin: 4px 0 0;
+    const data =
+        new Date(dataISO);
 
-    color: var(--secundario);
 
-    font-size: 11px;
+    return data.toLocaleDateString(
+        "pt-BR",
+        {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric"
+        }
+    );
 }
 
 
-.limpar {
-    padding: 6px;
+function atualizarHistorico() {
 
-    border: 0;
+    const historicoBox =
+        el("historicoBox");
 
-    background: transparent;
 
-    color: #999;
+    if (!historicoBox) {
+        return;
+    }
 
-    font-size: 12px;
-}
 
+    historicoBox.innerHTML = "";
 
-.estado-vazio {
-    padding: 32px 0;
 
-    text-align: center;
+    if (historico.length === 0) {
 
-    color: #aaa;
+        historicoBox.innerHTML = `
+            <div class="estado-vazio">
+                Nenhum evento registrado
+            </div>
+        `;
 
-    font-size: 14px;
-}
+        return;
+    }
 
 
-/* ==================================================
-   LISTA
-   ================================================== */
+    const eventos =
+        [...historico].reverse();
 
-.item {
-    min-height: 64px;
 
-    display: flex;
+    eventos.forEach(evento => {
 
-    justify-content: space-between;
-    align-items: center;
+        const linha =
+            document.createElement("div");
 
-    gap: 10px;
 
-    border-bottom:
-        1px solid
-        var(--borda);
-}
+        linha.className =
+            "evento-historico";
+
+
+        const classeTipo =
+            evento.tipo === "acabou"
+                ? "acabou"
+                : "comprado";
+
+
+        const textoTipo =
+            evento.tipo === "acabou"
+                ? "ACABOU"
+                : "COMPRADO";
+
 
+        linha.innerHTML = `
 
-.item:last-child {
-    border-bottom: none;
+            <div class="evento-principal">
+
+                <span
+                    class="evento-tipo ${classeTipo}"
+                >
+                    ${textoTipo}
+                </span>
+
+                <strong>
+                    ${evento.nome}
+                </strong>
+
+                ${
+                    evento.quantidade > 1
+                        ? `
+                            <span class="evento-quantidade">
+                                x${evento.quantidade}
+                            </span>
+                          `
+                        : ""
+                }
+
+            </div>
+
+            <div class="evento-data">
+                ${formatarData(evento.data)}
+            </div>
+        `;
+
+
+        historicoBox.appendChild(
+            linha
+        );
+    });
 }
+
 
+// ==================================================
+// IDENTIFICAÇÃO
+// ==================================================
 
-.item-dados {
-    display: flex;
+function mesmoProduto(produto, evento) {
 
-    align-items: center;
+    if (
+        produto.ean &&
+        evento.ean
+    ) {
 
-    gap: 8px;
+        return (
+            String(produto.ean) ===
+            String(evento.ean)
+        );
+    }
+
+
+    return (
+        String(produto.nome || "")
+            .toLowerCase() ===
+        String(evento.nome || "")
+            .toLowerCase()
+    );
 }
 
 
-.item-nome {
-    font-size: 16px;
+function eventosDoProduto(produto) {
 
-    font-weight: 600;
+    return historico
+        .filter(
+            evento =>
+                mesmoProduto(
+                    produto,
+                    evento
+                )
+        )
+        .sort(
+            (a, b) =>
+                new Date(a.data) -
+                new Date(b.data)
+        );
 }
+
+
+// ==================================================
+// CÁLCULOS
+// ==================================================
 
+function diferencaDias(
+    dataInicial,
+    dataFinal
+) {
 
-.item-quantidade {
-    color: var(--secundario);
+    const inicio =
+        new Date(dataInicial);
 
-    font-size: 13px;
+    const fim =
+        new Date(dataFinal);
+
+
+    return (
+        fim - inicio
+    ) /
+    (
+        1000 *
+        60 *
+        60 *
+        24
+    );
 }
+
+
+function media(valores) {
 
+    if (valores.length === 0) {
+        return null;
+    }
 
-.item-acoes {
-    display: flex;
 
-    gap: 6px;
+    return (
+        valores.reduce(
+            (total, valor) =>
+                total + valor,
+            0
+        ) /
+        valores.length
+    );
 }
 
 
-.acao {
-    width: 35px;
-    height: 35px;
+function calcularResumoProduto(produto) {
 
-    padding: 0;
+    const eventos =
+        eventosDoProduto(produto);
 
-    border: none;
 
-    border-radius: 11px;
+    const duracoes = [];
+    const reposicoes = [];
 
-    display: flex;
 
-    justify-content: center;
-    align-items: center;
+    for (
+        let i = 0;
+        i < eventos.length - 1;
+        i++
+    ) {
 
-    font-size: 18px;
-}
+        const atual =
+            eventos[i];
 
+        const proximo =
+            eventos[i + 1];
 
-.quantidade {
-    background: #efefec;
 
-    color: var(--texto);
-}
+        if (
+            atual.tipo === "comprado" &&
+            proximo.tipo === "acabou"
+        ) {
 
+            duracoes.push(
+                diferencaDias(
+                    atual.data,
+                    proximo.data
+                )
+            );
+        }
 
-.concluir {
-    background: var(--verde);
 
-    color: white;
-}
+        if (
+            atual.tipo === "acabou" &&
+            proximo.tipo === "comprado"
+        ) {
 
+            reposicoes.push(
+                diferencaDias(
+                    atual.data,
+                    proximo.data
+                )
+            );
+        }
+    }
 
-/* ==================================================
-   PREVISÕES
-   ================================================== */
 
-.previsoes-card {
-    margin-top: 14px;
-}
+    const ultimoEvento =
+        eventos.length
+            ? eventos[eventos.length - 1]
+            : null;
 
 
-.estado-previsao-vazio {
-    padding: 21px 5px 7px;
+    return {
 
-    color: #999;
+        duracaoMedia:
+            media(duracoes),
 
-    text-align: center;
+        reposicaoMedia:
+            media(reposicoes),
 
-    font-size: 12px;
+        ciclosDuracao:
+            duracoes.length,
 
-    line-height: 1.55;
-}
+        ciclosReposicao:
+            reposicoes.length,
 
+        ultimoEvento:
+            ultimoEvento,
 
-.estado-previsao-vazio strong {
-    color: #777;
+        totalEventos:
+            eventos.length
+    };
 }
 
 
-.previsao-item {
-    min-height: 68px;
+function formatarDuracao(dias) {
 
-    display: flex;
+    if (
+        dias === null ||
+        dias === undefined
+    ) {
 
-    align-items: center;
-    justify-content: space-between;
+        return "Sem dados suficientes";
+    }
 
-    gap: 12px;
 
-    padding: 8px 0;
+    if (dias < 1) {
 
-    border-bottom:
-        1px solid
-        var(--borda);
-}
+        const horas =
+            dias * 24;
 
 
-.previsao-item:last-child {
-    border-bottom: none;
-}
+        if (horas < 1) {
 
+            const minutos =
+                Math.max(
+                    1,
+                    Math.round(
+                        horas * 60
+                    )
+                );
 
-.previsao-info {
-    min-width: 0;
 
-    display: flex;
-    flex-direction: column;
+            return `${minutos} min`;
+        }
 
-    gap: 4px;
-}
 
+        return `${horas.toFixed(1)} h`;
+    }
 
-.previsao-info strong {
-    font-size: 14px;
+
+    return `${dias.toFixed(1)} dias`;
 }
 
 
-.previsao-info span {
-    color: var(--secundario);
+// ==================================================
+// PRODUTOS CONHECIDOS
+// ==================================================
 
-    font-size: 11px;
-}
+function obterProdutosConhecidos() {
+
+    const resultado =
+        produtos.map(
+            produto => ({
+                nome:
+                    produto.nome,
+
+                ean:
+                    produto.ean || null
+            })
+        );
+
+
+    historico.forEach(evento => {
+
+        const existe =
+            resultado.find(
+                produto =>
+                    mesmoProduto(
+                        produto,
+                        evento
+                    )
+            );
+
 
+        if (!existe) {
 
-.previsao-lado {
-    display: flex;
+            resultado.push({
 
-    flex-direction: column;
+                nome:
+                    evento.nome,
 
-    align-items: flex-end;
+                ean:
+                    evento.ean || null
+            });
+        }
+    });
 
-    gap: 7px;
 
-    flex-shrink: 0;
+    return resultado;
 }
 
 
-.previsao-status {
-    flex-shrink: 0;
+// ==================================================
+// PREVISÕES
+// ==================================================
 
-    padding: 5px 7px;
+function calcularPrevisao(produto) {
 
-    border-radius: 8px;
+    const resumo =
+        calcularResumoProduto(produto);
 
-    font-size: 9px;
 
-    font-weight: 800;
+    if (
+        resumo.duracaoMedia === null ||
+        !resumo.ultimoEvento
+    ) {
 
-    letter-spacing: .35px;
-}
+        return null;
+    }
 
 
-.previsao-status.normal {
-    background: var(--verde-claro);
+    if (
+        resumo.ultimoEvento.tipo !==
+        "comprado"
+    ) {
 
-    color: var(--verde);
-}
+        return {
 
+            produto: produto,
 
-.previsao-status.atencao {
-    background: var(--amarelo-claro);
+            situacao: "acabou",
 
-    color: var(--amarelo);
-}
+            diasRestantes: 0,
 
+            dataPrevista: null,
 
-.previsao-status.provavel,
-.previsao-status.acabou {
-    background: var(--vermelho-claro);
+            duracaoMedia:
+                resumo.duracaoMedia
+        };
+    }
 
-    color: var(--vermelho);
-}
 
+    const dataCompra =
+        new Date(
+            resumo.ultimoEvento.data
+        );
 
-.botao-previsao {
-    min-height: 30px;
 
-    padding: 6px 9px;
+    const milissegundosDuracao =
+        resumo.duracaoMedia *
+        24 *
+        60 *
+        60 *
+        1000;
 
-    border: none;
 
-    border-radius: 9px;
+    const dataPrevista =
+        new Date(
+            dataCompra.getTime() +
+            milissegundosDuracao
+        );
 
-    background: var(--escuro);
 
-    color: white;
+    const agora =
+        new Date();
 
-    font-size: 10px;
 
-    font-weight: 700;
-}
+    const diasRestantes =
+        (
+            dataPrevista -
+            agora
+        ) /
+        (
+            1000 *
+            60 *
+            60 *
+            24
+        );
 
 
-/* ==================================================
-   AÇÕES
-   ================================================== */
+    let situacao =
+        "normal";
 
-.acoes {
-    display: grid;
 
-    gap: 10px;
+    const limiteAtencao =
+        Math.max(
+            1,
+            resumo.duracaoMedia *
+            0.20
+        );
 
-    margin-top: 18px;
-}
+
+    if (
+        diasRestantes <= 0
+    ) {
+
+        situacao =
+            "provavel";
 
+    } else if (
+        diasRestantes <=
+        limiteAtencao
+    ) {
 
-.acoes-menores {
-    display: grid;
+        situacao =
+            "atencao";
+    }
 
-    grid-template-columns:
-        1fr 1fr;
 
-    gap: 10px;
+    return {
+
+        produto:
+            produto,
+
+        situacao:
+            situacao,
+
+        diasRestantes:
+            diasRestantes,
+
+        dataPrevista:
+            dataPrevista,
+
+        duracaoMedia:
+            resumo.duracaoMedia
+    };
 }
 
 
-.botao {
-    width: 100%;
+function textoPrevisao(previsao) {
 
-    min-height: 52px;
+    if (
+        previsao.situacao ===
+        "acabou"
+    ) {
 
-    padding: 12px;
+        return "Já está na lista de compras";
+    }
 
-    border: none;
 
-    border-radius: 16px;
+    const dias =
+        previsao.diasRestantes;
 
-    background: #e9e9e5;
 
-    color: var(--texto);
+    if (dias <= 0) {
 
-    font-size: 14px;
+        const atraso =
+            Math.abs(dias);
 
-    font-weight: 600;
-}
 
+        if (atraso < 1) {
 
-.botao.destaque {
-    min-height: 64px;
+            return "Pode estar acabando hoje";
+        }
 
-    background: var(--escuro);
 
-    color: white;
+        return (
+            `Previsão vencida há ` +
+            `${Math.round(atraso)} dia(s)`
+        );
+    }
 
-    font-size: 16px;
-}
+
+    if (dias < 1) {
 
+        return "Pode acabar hoje";
+    }
 
-.botao.menu {
-    min-height: 47px;
 
-    background: transparent;
+    if (dias < 2) {
 
-    border:
-        1px solid
-        #d7d6d0;
+        return "Pode acabar amanhã";
+    }
 
-    color: #666;
 
-    font-weight: 500;
+    return (
+        `Estimativa: ${Math.ceil(dias)} dias`
+    );
 }
 
 
-.icone {
-    margin-right: 6px;
+function tituloSituacao(situacao) {
 
-    font-size: 20px;
-}
+    if (situacao === "acabou") {
+        return "NA LISTA";
+    }
+
+    if (situacao === "provavel") {
+        return "PROVÁVEL";
+    }
 
+    if (situacao === "atencao") {
+        return "ATENÇÃO";
+    }
 
-.painel-extra {
-    margin-top: 14px;
+    return "NORMAL";
 }
 
 
-/* ==================================================
-   PRODUTOS
-   ================================================== */
+// ==================================================
+// ADICIONAR PREVISÃO À LISTA
+// ==================================================
 
-.produtos-cabecalho {
-    margin-bottom: 16px;
-}
+function adicionarPrevisaoALista(produto) {
 
+    if (!produto) {
+        return;
+    }
 
-.busca-produtos {
-    margin-top: 15px;
-    margin-bottom: 8px;
-}
 
+    const existente =
+        itens.find(item => {
 
-.busca-produtos input {
-    width: 100%;
+            if (
+                produto.ean &&
+                item.ean
+            ) {
 
-    height: 46px;
+                return (
+                    String(produto.ean) ===
+                    String(item.ean)
+                );
+            }
 
-    padding: 0 14px;
 
-    border:
-        1px solid
-        var(--borda);
+            return (
+                String(item.nome)
+                    .toLowerCase() ===
+                String(produto.nome)
+                    .toLowerCase()
+            );
+        });
 
-    border-radius: 14px;
 
-    background: var(--fundo);
+    if (existente) {
 
-    color: var(--texto);
+        existente.quantidade++;
 
-    font-size: 14px;
+        salvarLista();
 
-    outline: none;
-}
+        atualizarLista();
+        atualizarPrevisoes();
 
+        mostrarMensagem(
+            `${produto.nome} já estava na lista. Quantidade aumentada.`
+        );
 
-.busca-produtos input:focus {
-    border-color: #b8b9b2;
+        return;
+    }
 
-    background: #ffffff;
-}
 
+    itens.push({
 
-.contador-produtos {
-    margin: 11px 2px 4px;
+        nome:
+            produto.nome,
 
-    color: #aaa;
+        quantidade:
+            1,
 
-    font-size: 10px;
-}
+        ean:
+            produto.ean || null
+    });
 
 
-.produto-card {
-    padding: 16px 0;
+    salvarLista();
 
-    border-bottom:
-        1px solid
-        var(--borda);
-}
 
+    registrarEvento(
+        "acabou",
+        produto.nome,
+        produto.ean || null,
+        1
+    );
 
-.produto-card:last-child {
-    border-bottom: none;
-}
+
+    atualizarLista();
+    atualizarPrevisoes();
 
 
-.produto-info {
-    min-width: 0;
+    mostrarMensagem(
+        `${produto.nome} adicionado à lista`
+    );
 }
 
 
-.produto-info strong {
-    font-size: 15px;
-}
+function atualizarPrevisoes() {
 
+    const previsoesBox =
+        el("previsoesBox");
 
-.produto-ean {
-    margin-top: 4px;
 
-    color: #999;
+    if (!previsoesBox) {
+        return;
+    }
 
-    font-size: 11px;
-}
 
+    previsoesBox.innerHTML = "";
 
-.produto-estatisticas {
-    display: flex;
 
-    flex-wrap: wrap;
+    const produtosConhecidos =
+        obterProdutosConhecidos();
 
-    gap: 10px;
 
-    margin-top: 8px;
+    const previsoes =
+        produtosConhecidos
+            .map(
+                produto =>
+                    calcularPrevisao(
+                        produto
+                    )
+            )
+            .filter(
+                previsao =>
+                    previsao !== null
+            );
 
-    color: #aaa;
 
-    font-size: 10px;
-}
+    if (previsoes.length === 0) {
 
+        previsoesBox.innerHTML = `
+            <div class="estado-previsao-vazio">
 
-.produto-acoes {
-    display: grid;
+                Ainda preciso observar pelo menos um ciclo
 
-    grid-template-columns:
-        1fr 1fr;
+                <strong>
+                    comprado → acabou
+                </strong>
 
-    gap: 8px;
+                para começar a prever.
 
-    margin-top: 12px;
-}
+            </div>
+        `;
 
+        return;
+    }
 
-.produto-botao {
-    min-height: 36px;
 
-    border: none;
+    previsoes.sort(
+        (a, b) => {
 
-    border-radius: 11px;
+            if (
+                a.situacao === "acabou" &&
+                b.situacao !== "acabou"
+            ) {
+                return -1;
+            }
 
-    font-size: 12px;
 
-    font-weight: 600;
-}
+            if (
+                b.situacao === "acabou" &&
+                a.situacao !== "acabou"
+            ) {
+                return 1;
+            }
 
 
-.produto-botao.editar {
-    background: #efefec;
+            return (
+                a.diasRestantes -
+                b.diasRestantes
+            );
+        }
+    );
 
-    color: #555;
-}
 
+    previsoes
+        .slice(0, 5)
+        .forEach(previsao => {
 
-.produto-botao.excluir {
-    background: var(--vermelho-claro);
+            const linha =
+                document.createElement(
+                    "div"
+                );
 
-    color: var(--vermelho);
-}
 
+            linha.className =
+                "previsao-item";
 
-/* ==================================================
-   HISTÓRICO
-   ================================================== */
 
-.evento-historico {
-    padding: 14px 0;
+            const info =
+                document.createElement(
+                    "div"
+                );
 
-    border-bottom:
-        1px solid
-        var(--borda);
-}
 
+            info.className =
+                "previsao-info";
 
-.evento-historico:last-child {
-    border-bottom: none;
-}
 
+            const nome =
+                document.createElement(
+                    "strong"
+                );
 
-.evento-principal {
-    display: flex;
 
-    align-items: center;
+            nome.textContent =
+                previsao.produto.nome;
 
-    gap: 8px;
-}
 
+            const detalhe =
+                document.createElement(
+                    "span"
+                );
 
-.evento-principal strong {
-    font-size: 15px;
-}
 
+            detalhe.textContent =
+                textoPrevisao(
+                    previsao
+                );
 
-.evento-tipo {
-    padding: 4px 7px;
 
-    border-radius: 7px;
+            info.appendChild(
+                nome
+            );
 
-    font-size: 9px;
+            info.appendChild(
+                detalhe
+            );
 
-    font-weight: 800;
 
-    letter-spacing: .4px;
-}
+            const ladoDireito =
+                document.createElement(
+                    "div"
+                );
 
 
-.evento-tipo.acabou {
-    background: var(--vermelho-claro);
+            ladoDireito.className =
+                "previsao-lado";
 
-    color: var(--vermelho);
-}
 
+            const status =
+                document.createElement(
+                    "span"
+                );
 
-.evento-tipo.comprado {
-    background: var(--verde-claro);
 
-    color: var(--verde);
-}
+            status.className =
+                `previsao-status ${previsao.situacao}`;
 
 
-.evento-quantidade {
-    color: #999;
+            status.textContent =
+                tituloSituacao(
+                    previsao.situacao
+                );
 
-    font-size: 12px;
-}
 
+            ladoDireito.appendChild(
+                status
+            );
 
-.evento-data {
-    margin-top: 6px;
 
-    color: #aaa;
+            /*
+                Só oferecemos adicionar automaticamente
+                quando realmente há uma previsão acionável.
+            */
 
-    font-size: 11px;
-}
+            if (
+                previsao.situacao ===
+                "atencao" ||
 
+                previsao.situacao ===
+                "provavel"
+            ) {
 
-/* ==================================================
-   RESUMO
-   ================================================== */
+                const botaoAdicionar =
+                    document.createElement(
+                        "button"
+                    );
 
-.resumo-produto {
-    padding: 16px 0;
 
-    border-bottom:
-        1px solid
-        var(--borda);
-}
+                botaoAdicionar.type =
+                    "button";
 
 
-.resumo-produto:last-child {
-    border-bottom: none;
-}
+                botaoAdicionar.className =
+                    "botao-previsao";
 
 
-.resumo-topo {
-    display: flex;
+                botaoAdicionar.textContent =
+                    "Adicionar à lista";
 
-    justify-content: space-between;
-    align-items: center;
 
-    gap: 10px;
+                botaoAdicionar.addEventListener(
+                    "click",
+                    () => {
 
-    margin-bottom: 13px;
-}
+                        adicionarPrevisaoALista(
+                            previsao.produto
+                        );
+                    }
+                );
+
+
+                ladoDireito.appendChild(
+                    botaoAdicionar
+                );
+            }
+
 
+            linha.appendChild(
+                info
+            );
 
-.resumo-topo strong {
-    font-size: 16px;
+
+            linha.appendChild(
+                ladoDireito
+            );
+
+
+            previsoesBox.appendChild(
+                linha
+            );
+        });
 }
 
 
-.ultimo-evento {
-    padding: 4px 7px;
+// ==================================================
+// RESUMO
+// ==================================================
 
-    border-radius: 7px;
+function atualizarResumo() {
 
-    background: #efefec;
+    const resumoBox =
+        el("resumoBox");
 
-    color: #777;
 
-    font-size: 9px;
+    if (!resumoBox) {
+        return;
+    }
 
-    font-weight: 800;
 
-    letter-spacing: .3px;
-}
+    resumoBox.innerHTML = "";
 
 
-.metricas {
-    display: grid;
+    const produtosConhecidos =
+        obterProdutosConhecidos();
 
-    grid-template-columns:
-        1fr 1fr;
 
-    gap: 10px;
-}
+    if (
+        produtosConhecidos.length === 0
+    ) {
 
+        resumoBox.innerHTML = `
+            <div class="estado-vazio">
+                Ainda não há dados suficientes
+            </div>
+        `;
 
-.metrica {
-    padding: 12px;
+        return;
+    }
 
-    background: var(--fundo);
 
-    border-radius: 14px;
+    produtosConhecidos.forEach(produto => {
 
-    display: flex;
+        const resumo =
+            calcularResumoProduto(
+                produto
+            );
 
-    flex-direction: column;
 
-    gap: 5px;
-}
+        const previsao =
+            calcularPrevisao(
+                produto
+            );
+
+
+        const card =
+            document.createElement(
+                "div"
+            );
+
+
+        card.className =
+            "resumo-produto";
+
+
+        let ultimoTexto =
+            "Nenhum evento";
+
+
+        if (resumo.ultimoEvento) {
+
+            ultimoTexto =
+                resumo.ultimoEvento.tipo ===
+                "acabou"
+                    ? "ACABOU"
+                    : "COMPRADO";
+        }
+
+
+        let previsaoHTML = `
+
+            <div class="previsao-resumo">
+                Previsão ainda indisponível
+            </div>
+        `;
+
+
+        if (previsao) {
+
+            previsaoHTML = `
+
+                <div class="previsao-resumo">
+                    ${textoPrevisao(previsao)}
+                </div>
+            `;
+        }
+
+
+        card.innerHTML = `
 
+            <div class="resumo-topo">
 
-.metrica span {
-    color: #888;
+                <strong>
+                    ${produto.nome}
+                </strong>
 
-    font-size: 11px;
+                <span class="ultimo-evento">
+                    ${ultimoTexto}
+                </span>
+
+            </div>
+
+
+            <div class="metricas">
+
+                <div class="metrica">
+
+                    <span>
+                        Duração média
+                    </span>
+
+                    <strong>
+                        ${
+                            formatarDuracao(
+                                resumo.duracaoMedia
+                            )
+                        }
+                    </strong>
+
+                </div>
+
+
+                <div class="metrica">
+
+                    <span>
+                        Reposição média
+                    </span>
+
+                    <strong>
+                        ${
+                            formatarDuracao(
+                                resumo.reposicaoMedia
+                            )
+                        }
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            ${previsaoHTML}
+
+
+            <div class="resumo-rodape">
+
+                <span>
+                    Ciclos de consumo:
+                    ${resumo.ciclosDuracao}
+                </span>
+
+                <span>
+                    Reposições medidas:
+                    ${resumo.ciclosReposicao}
+                </span>
+
+            </div>
+        `;
+
+
+        resumoBox.appendChild(
+            card
+        );
+    });
 }
+
+
+// ==================================================
+// LISTA
+// ==================================================
 
+function totalItens() {
 
-.metrica strong {
-    font-size: 14px;
+    return itens.reduce(
+        (total, item) =>
+            total + item.quantidade,
+        0
+    );
 }
 
 
-.previsao-resumo {
-    margin-top: 10px;
+function atualizarLista() {
 
-    padding: 10px 12px;
+    const lista =
+        el("lista");
 
-    border-radius: 12px;
+    const contador =
+        el("contador");
 
-    background: var(--verde-claro);
 
-    color: var(--verde);
+    if (!lista) {
+        return;
+    }
 
-    font-size: 12px;
 
-    font-weight: 600;
-}
+    lista.innerHTML = "";
 
 
-.resumo-rodape {
-    display: flex;
+    if (contador) {
 
-    flex-wrap: wrap;
+        contador.textContent =
+            totalItens();
+    }
 
-    gap: 12px;
 
-    margin-top: 11px;
+    if (itens.length === 0) {
 
-    color: #999;
+        lista.innerHTML = `
+            <div class="estado-vazio">
+                Nenhum item na lista
+            </div>
+        `;
 
-    font-size: 10px;
-}
+        return;
+    }
 
 
-/* ==================================================
-   SCANNER
-   ================================================== */
+    itens.forEach(
+        (item, indice) => {
 
-.scanner-modal {
-    position: fixed;
+            const linha =
+                document.createElement(
+                    "div"
+                );
 
-    inset: 0;
 
-    z-index: 999;
+            linha.className =
+                "item";
 
-    padding: 18px;
 
-    background:
-        rgba(12, 13, 12, .95);
+            linha.innerHTML = `
 
-    display: flex;
+                <div class="item-dados">
 
-    align-items: center;
-    justify-content: center;
-}
+                    <span class="item-nome">
+                        ${item.nome}
+                    </span>
+
+                    <span class="item-quantidade">
+                        x${item.quantidade}
+                    </span>
+
+                </div>
+
+
+                <div class="item-acoes">
+
+                    <button
+                        class="acao quantidade"
+                        data-acao="menos"
+                        data-indice="${indice}"
+                    >
+                        −
+                    </button>
 
+                    <button
+                        class="acao quantidade"
+                        data-acao="mais"
+                        data-indice="${indice}"
+                    >
+                        +
+                    </button>
 
-.scanner-modal[hidden] {
-    display: none;
+                    <button
+                        class="acao concluir"
+                        data-acao="comprado"
+                        data-indice="${indice}"
+                    >
+                        ✓
+                    </button>
+
+                </div>
+            `;
+
+
+            lista.appendChild(
+                linha
+            );
+        }
+    );
 }
+
+
+function adicionarItem(
+    nome,
+    ean = null,
+    registrar = true
+) {
+
+    nome =
+        nome.trim();
+
+
+    const existente =
+        itens.find(
+            item =>
+                item.nome
+                    .toLowerCase() ===
+                nome
+                    .toLowerCase()
+        );
+
+
+    if (existente) {
+
+        existente.quantidade++;
+
+
+        if (
+            !existente.ean &&
+            ean
+        ) {
+
+            existente.ean =
+                ean;
+        }
+
+    } else {
+
+        itens.push({
 
+            nome:
+                nome,
 
-.scanner-conteudo {
-    width: 100%;
-    max-width: 480px;
+            quantidade:
+                1,
 
-    padding: 20px;
+            ean:
+                ean
+        });
+    }
 
-    background: white;
 
-    border-radius: 24px;
+    salvarLista();
+
+
+    if (registrar) {
+
+        registrarEvento(
+            "acabou",
+            nome,
+            ean,
+            1
+        );
+    }
+
+
+    atualizarLista();
+    atualizarPrevisoes();
 }
+
+
+function lidarCliqueLista(event) {
+
+    const botao =
+        event.target.closest(
+            "[data-acao]"
+        );
+
+
+    if (!botao) {
+        return;
+    }
+
+
+    const indice =
+        Number(
+            botao.dataset.indice
+        );
+
+
+    const acao =
+        botao.dataset.acao;
+
+
+    const item =
+        itens[indice];
 
 
-.scanner-conteudo h2 {
-    margin: 0;
+    if (!item) {
+        return;
+    }
 
-    text-align: center;
+
+    if (acao === "mais") {
+
+        item.quantidade++;
+    }
+
+
+    if (acao === "menos") {
+
+        item.quantidade--;
+
+
+        if (
+            item.quantidade <= 0
+        ) {
+
+            itens.splice(
+                indice,
+                1
+            );
+        }
+    }
+
+
+    if (
+        acao === "comprado"
+    ) {
+
+        registrarEvento(
+            "comprado",
+            item.nome,
+            item.ean || null,
+            item.quantidade
+        );
+
+
+        itens.splice(
+            indice,
+            1
+        );
+
+
+        mostrarMensagem(
+            `${item.nome} marcado como comprado`
+        );
+    }
+
+
+    salvarLista();
+
+    atualizarLista();
+    atualizarPrevisoes();
 }
+
+
+function limparLista() {
+
+    if (
+        itens.length === 0
+    ) {
+
+        return;
+    }
+
+
+    const confirmar =
+        confirm(
+            "Limpar toda a lista?"
+        );
 
 
-.scanner-conteudo p {
-    margin: 6px 0 18px;
+    if (!confirmar) {
+        return;
+    }
 
-    color: #888;
 
-    text-align: center;
+    itens = [];
 
-    font-size: 13px;
+
+    salvarLista();
+
+    atualizarLista();
+    atualizarPrevisoes();
 }
 
 
-#reader {
-    width: 100%;
+// ==================================================
+// PRODUTOS
+// ==================================================
 
-    overflow: hidden;
+function buscarProdutoPorEAN(ean) {
 
-    border-radius: 16px;
+    return produtos.find(
+        produto =>
+            String(produto.ean) ===
+            String(ean)
+    );
 }
+
+
+function obterProdutosFiltrados() {
+
+    const busca =
+        el("buscaProdutos");
+
+
+    const termo =
+        busca
+            ? busca.value
+                .trim()
+                .toLowerCase()
+            : "";
+
 
+    if (!termo) {
+        return [...produtos];
+    }
 
-.cancelar {
-    margin-top: 16px;
+
+    return produtos.filter(
+        produto => {
+
+            const nome =
+                String(
+                    produto.nome || ""
+                ).toLowerCase();
+
+
+            const ean =
+                String(
+                    produto.ean || ""
+                ).toLowerCase();
+
+
+            return (
+                nome.includes(termo) ||
+                ean.includes(termo)
+            );
+        }
+    );
 }
 
 
-/* ==================================================
-   TOAST
-   ================================================== */
+function editarProduto(produto) {
 
-.toast {
-    position: fixed;
+    if (!produto) {
+        return;
+    }
 
-    left: 50%;
-    bottom: 30px;
 
-    z-index: 2000;
+    const nomeAtual =
+        String(
+            produto.nome || ""
+        );
 
-    transform:
-        translateX(-50%);
 
-    width:
-        calc(100% - 40px);
+    const novoNome =
+        prompt(
+            "Novo nome do produto:",
+            nomeAtual
+        );
 
-    max-width: 430px;
 
-    padding: 14px 18px;
+    if (
+        !novoNome ||
+        !novoNome.trim()
+    ) {
 
-    background: var(--escuro);
+        return;
+    }
 
-    color: white;
 
-    border-radius: 15px;
+    const nomeLimpo =
+        novoNome.trim();
 
-    text-align: center;
 
-    font-size: 14px;
+    if (
+        nomeLimpo ===
+        nomeAtual
+    ) {
 
-    box-shadow:
-        0 10px 30px
-        rgba(0, 0, 0, .2);
-}
+        return;
+    }
 
 
-.toast[hidden] {
-    display: none;
-}
+    produto.nome =
+        nomeLimpo;
+
+
+    itens.forEach(item => {
+
+        if (
+            produto.ean &&
+            item.ean &&
+            String(item.ean) ===
+            String(produto.ean)
+        ) {
+
+            item.nome =
+                nomeLimpo;
+        }
+    });
+
+
+    historico.forEach(evento => {
+
+        if (
+            produto.ean &&
+            evento.ean &&
+            String(evento.ean) ===
+            String(produto.ean)
+        ) {
+
+            evento.nome =
+                nomeLimpo;
+        }
+    });
 
 
-/* ==================================================
-   RODAPÉ
-   ================================================== */
+    salvarProdutos();
+    salvarLista();
+    salvarHistorico();
 
-footer {
-    margin-top: 25px;
 
-    text-align: center;
+    atualizarProdutos();
+    atualizarLista();
+    atualizarHistorico();
+    atualizarResumo();
+    atualizarPrevisoes();
 
-    color: #aaa;
 
-    font-size: 11px;
+    mostrarMensagem(
+        `${nomeAtual} alterado para ${nomeLimpo}`
+    );
 }
+
+
+function excluirProduto(produto) {
+
+    if (!produto) {
+        return;
+    }
+
+
+    const confirmar =
+        confirm(
+            `Excluir "${produto.nome}" dos produtos cadastrados?\n\nO histórico será mantido.`
+        );
+
+
+    if (!confirmar) {
+        return;
+    }
+
+
+    const indice =
+        produtos.indexOf(
+            produto
+        );
+
+
+    if (indice === -1) {
+        return;
+    }
+
+
+    produtos.splice(
+        indice,
+        1
+    );
+
+
+    salvarProdutos();
+
+
+    atualizarProdutos();
+    atualizarResumo();
+    atualizarPrevisoes();
+
+
+    mostrarMensagem(
+        `${produto.nome} removido do cadastro`
+    );
+}
+
+
+function atualizarProdutos() {
+
+    const produtosBox =
+        el("produtosBox");
+
+    const contadorProdutos =
+        el("contadorProdutos");
+
+
+    if (!produtosBox) {
+        return;
+    }
+
+
+    produtosBox.innerHTML = "";
+
+
+    if (contadorProdutos) {
+
+        contadorProdutos.textContent =
+            produtos.length === 1
+                ? "1 produto cadastrado"
+                : `${produtos.length} produtos cadastrados`;
+    }
+
+
+    if (
+        produtos.length === 0
+    ) {
+
+        produtosBox.innerHTML = `
+            <div class="estado-vazio">
+                Nenhum produto cadastrado
+            </div>
+        `;
+
+        return;
+    }
+
+
+    const filtrados =
+        obterProdutosFiltrados();
+
+
+    if (
+        filtrados.length === 0
+    ) {
+
+        produtosBox.innerHTML = `
+            <div class="estado-vazio">
+                Nenhum produto encontrado
+            </div>
+        `;
+
+        return;
+    }
+
+
+    filtrados.forEach(produto => {
+
+        const eventos =
+            eventosDoProduto(
+                produto
+            );
+
+
+        const ultimoEvento =
+            eventos.length
+                ? eventos[
+                    eventos.length - 1
+                  ]
+                : null;
+
+
+        const card =
+            document.createElement(
+                "div"
+            );
+
+
+        card.className =
+            "produto-card";
+
+
+        const info =
+            document.createElement(
+                "div"
+            );
+
+
+        info.className =
+            "produto-info";
+
+
+        const nome =
+            document.createElement(
+                "strong"
+            );
+
+
+        nome.textContent =
+            produto.nome ||
+            "Produto sem nome";
+
+
+        const ean =
+            document.createElement(
+                "div"
+            );
+
+
+        ean.className =
+            "produto-ean";
+
+
+        ean.textContent =
+            produto.ean
+                ? `EAN ${produto.ean}`
+                : "Sem EAN";
+
+
+        const estatisticas =
+            document.createElement(
+                "div"
+            );
+
+
+        estatisticas.className =
+            "produto-estatisticas";
+
+
+        const totalEventos =
+            document.createElement(
+                "span"
+            );
+
+
+        totalEventos.textContent =
+            eventos.length === 1
+                ? "1 evento"
+                : `${eventos.length} eventos`;
+
+
+        const ultimaMovimentacao =
+            document.createElement(
+                "span"
+            );
+
+
+        ultimaMovimentacao.textContent =
+            ultimoEvento
+                ? `Último: ${formatarDataCurta(
+                    ultimoEvento.data
+                  )}`
+                : "Último: sem registro";
+
+
+        estatisticas.appendChild(
+            totalEventos
+        );
+
+
+        estatisticas.appendChild(
+            ultimaMovimentacao
+        );
+
+
+        info.appendChild(
+            nome
+        );
+
+        info.appendChild(
+            ean
+        );
+
+        info.appendChild(
+            estatisticas
+        );
+
+
+        const acoes =
+            document.createElement(
+                "div"
+            );
+
+
+        acoes.className =
+            "produto-acoes";
+
+
+        const botaoEditar =
+            document.createElement(
+                "button"
+            );
+
+
+        botaoEditar.type =
+            "button";
+
+
+        botaoEditar.className =
+            "produto-botao editar";
+
+
+        botaoEditar.textContent =
+            "Editar";
+
+
+        botaoEditar.addEventListener(
+            "click",
+            () => {
+
+                editarProduto(
+                    produto
+                );
+            }
+        );
+
+
+        const botaoExcluir =
+            document.createElement(
+                "button"
+            );
+
+
+        botaoExcluir.type =
+            "button";
+
+
+        botaoExcluir.className =
+            "produto-botao excluir";
+
+
+        botaoExcluir.textContent =
+            "Excluir";
+
+
+        botaoExcluir.addEventListener(
+            "click",
+            () => {
+
+                excluirProduto(
+                    produto
+                );
+            }
+        );
+
+
+        acoes.appendChild(
+            botaoEditar
+        );
+
+
+        acoes.appendChild(
+            botaoExcluir
+        );
+
+
+        card.appendChild(
+            info
+        );
+
+
+        card.appendChild(
+            acoes
+        );
+
+
+        produtosBox.appendChild(
+            card
+        );
+    });
+}
+
+
+// ==================================================
+// EAN
+// ==================================================
+
+function processarEAN(ean) {
+
+    ean =
+        String(ean)
+            .replace(
+                /\D/g,
+                ""
+            );
+
+
+    if (!ean) {
+
+        mostrarMensagem(
+            "Código inválido"
+        );
+
+        return;
+    }
+
+
+    const produto =
+        buscarProdutoPorEAN(
+            ean
+        );
+
+
+    if (produto) {
+
+        adicionarItem(
+            produto.nome,
+            ean
+        );
+
+
+        mostrarMensagem(
+            `${produto.nome} adicionado`
+        );
+
+
+        return;
+    }
+
+
+    const nome =
+        prompt(
+            `Produto ainda não cadastrado.\n\nEAN: ${ean}\n\nNome do produto:`
+        );
+
+
+    if (
+        !nome ||
+        !nome.trim()
+    ) {
+
+        return;
+    }
+
+
+    const nomeLimpo =
+        nome.trim();
+
+
+    if (
+        buscarProdutoPorEAN(ean)
+    ) {
+
+        mostrarMensagem(
+            "Este EAN já está cadastrado"
+        );
+
+        return;
+    }
+
+
+    produtos.push({
+
+        ean:
+            ean,
+
+        nome:
+            nomeLimpo
+    });
+
+
+    salvarProdutos();
+
+    atualizarProdutos();
+
+
+    adicionarItem(
+        nomeLimpo,
+        ean
+    );
+
+
+    mostrarMensagem(
+        `${nomeLimpo} cadastrado e adicionado`
+    );
+}
+
+
+function adicionarPorCodigo() {
+
+    const entrada =
+        prompt(
+            "Digite o código de barras:"
+        );
+
+
+    if (!entrada) {
+        return;
+    }
+
+
+    processarEAN(
+        entrada
+    );
+}
+
+
+function adicionarManualmente() {
+
+    const nome =
+        prompt(
+            "Nome do produto:"
+        );
+
+
+    if (
+        !nome ||
+        !nome.trim()
+    ) {
+
+        return;
+    }
+
+
+    adicionarItem(
+        nome.trim(),
+        null
+    );
+}
+
+
+// ==================================================
+// PAINÉIS
+// ==================================================
+
+function fecharOutrosPaineis(
+    excecao
+) {
+
+    const areas = {
+
+        resumo:
+            el("areaResumo"),
+
+        historico:
+            el("areaHistorico"),
+
+        produtos:
+            el("areaProdutos")
+    };
+
+
+    const botoes = {
+
+        resumo:
+            el("botaoResumo"),
+
+        historico:
+            el("botaoHistorico"),
+
+        produtos:
+            el("botaoProdutos")
+    };
+
+
+    Object.keys(
+        areas
+    ).forEach(nome => {
+
+        if (
+            nome !== excecao &&
+            areas[nome]
+        ) {
+
+            areas[nome].hidden =
+                true;
+        }
+    });
+
+
+    if (
+        excecao !== "resumo" &&
+        botoes.resumo
+    ) {
+
+        botoes.resumo.textContent =
+            "Resumo de consumo";
+    }
+
+
+    if (
+        excecao !== "historico" &&
+        botoes.historico
+    ) {
+
+        botoes.historico.textContent =
+            "Histórico";
+    }
+
+
+    if (
+        excecao !== "produtos" &&
+        botoes.produtos
+    ) {
+
+        botoes.produtos.textContent =
+            "Produtos cadastrados";
+    }
+}
+
+
+function alternarResumo() {
+
+    const area =
+        el("areaResumo");
+
+    const botao =
+        el("botaoResumo");
+
+
+    if (!area) {
+        return;
+    }
+
+
+    const abrir =
+        area.hidden;
+
+
+    area.hidden =
+        !abrir;
+
+
+    if (botao) {
+
+        botao.textContent =
+            abrir
+                ? "Ocultar resumo"
+                : "Resumo de consumo";
+    }
+
+
+    if (abrir) {
+
+        fecharOutrosPaineis(
+            "resumo"
+        );
+
+        atualizarResumo();
+    }
+}
+
+
+function alternarHistorico() {
+
+    const area =
+        el("areaHistorico");
+
+    const botao =
+        el("botaoHistorico");
+
+
+    if (!area) {
+        return;
+    }
+
+
+    const abrir =
+        area.hidden;
+
+
+    area.hidden =
+        !abrir;
+
+
+    if (botao) {
+
+        botao.textContent =
+            abrir
+                ? "Ocultar histórico"
+                : "Histórico";
+    }
+
+
+    if (abrir) {
+
+        fecharOutrosPaineis(
+            "historico"
+        );
+
+        atualizarHistorico();
+    }
+}
+
+
+function alternarProdutos() {
+
+    const area =
+        el("areaProdutos");
+
+    const botao =
+        el("botaoProdutos");
+
+
+    if (!area) {
+        return;
+    }
+
+
+    const abrir =
+        area.hidden;
+
+
+    area.hidden =
+        !abrir;
+
+
+    if (botao) {
+
+        botao.textContent =
+            abrir
+                ? "Ocultar produtos cadastrados"
+                : "Produtos cadastrados";
+    }
+
+
+    if (abrir) {
+
+        fecharOutrosPaineis(
+            "produtos"
+        );
+
+        atualizarProdutos();
+    }
+}
+
+
+// ==================================================
+// LIMPEZA
+// ==================================================
+
+function limparHistorico() {
+
+    if (
+        historico.length === 0
+    ) {
+
+        return;
+    }
+
+
+    const confirmar =
+        confirm(
+            "Apagar todo o histórico?"
+        );
+
+
+    if (!confirmar) {
+        return;
+    }
+
+
+    historico = [];
+
+
+    salvarHistorico();
+
+    atualizarHistorico();
+    atualizarResumo();
+    atualizarPrevisoes();
+    atualizarProdutos();
+}
+
+
+// ==================================================
+// SCANNER
+// ==================================================
+
+async function abrirScanner() {
+
+    const scannerModal =
+        el("scannerModal");
+
+
+    if (
+        typeof Html5Qrcode ===
+        "undefined"
+    ) {
+
+        alert(
+            "O leitor de código de barras não foi carregado."
+        );
+
+        return;
+    }
+
+
+    if (!scannerModal) {
+        return;
+    }
+
+
+    scannerModal.hidden =
+        false;
+
+
+    leituraEmAndamento =
+        false;
+
+
+    scanner =
+        new Html5Qrcode(
+            "reader"
+        );
+
+
+    const configuracao = {
+
+        fps: 10,
+
+        qrbox: {
+
+            width: 280,
+
+            height: 140
+        }
+    };
+
+
+    try {
+
+        scannerAtivo =
+            true;
+
+
+        await scanner.start(
+
+            {
+                facingMode:
+                    "environment"
+            },
+
+            configuracao,
+
+            async decodedText => {
+
+                if (
+                    leituraEmAndamento
+                ) {
+
+                    return;
+                }
+
+
+                leituraEmAndamento =
+                    true;
+
+
+                if (
+                    navigator.vibrate
+                ) {
+
+                    navigator.vibrate(
+                        120
+                    );
+                }
+
+
+                await fecharScanner();
+
+
+                processarEAN(
+                    decodedText
+                );
+            },
+
+            () => {
+                // Frame sem código.
+            }
+        );
+
+    } catch (erro) {
+
+        console.error(
+            "Erro na câmera:",
+            erro
+        );
+
+
+        scannerAtivo =
+            false;
+
+
+        scannerModal.hidden =
+            true;
+
+
+        alert(
+            "Não foi possível abrir a câmera."
+        );
+    }
+}
+
+
+async function fecharScanner() {
+
+    const scannerModal =
+        el("scannerModal");
+
+
+    if (
+        scanner &&
+        scannerAtivo
+    ) {
+
+        try {
+
+            await scanner.stop();
+
+        } catch (erro) {
+
+            console.log(
+                "Scanner já estava parado."
+            );
+        }
+    }
+
+
+    scannerAtivo =
+        false;
+
+
+    if (scanner) {
+
+        try {
+
+            scanner.clear();
+
+        } catch {
+
+            // Ignora
+        }
+    }
+
+
+    scanner =
+        null;
+
+
+    if (scannerModal) {
+
+        scannerModal.hidden =
+            true;
+    }
+}
+
+
+// ==================================================
+// EVENTOS
+// ==================================================
+
+function configurarEventos() {
+
+    const lista =
+        el("lista");
+
+
+    if (lista) {
+
+        lista.addEventListener(
+            "click",
+            lidarCliqueLista
+        );
+    }
+
+
+    const buscaProdutos =
+        el("buscaProdutos");
+
+
+    if (buscaProdutos) {
+
+        buscaProdutos.addEventListener(
+            "input",
+            atualizarProdutos
+        );
+    }
+
+
+    const eventos = [
+
+        [
+            "botaoAdicionar",
+            adicionarManualmente
+        ],
+
+        [
+            "botaoCodigo",
+            adicionarPorCodigo
+        ],
+
+        [
+            "botaoScanner",
+            abrirScanner
+        ],
+
+        [
+            "botaoFecharScanner",
+            fecharScanner
+        ],
+
+        [
+            "botaoResumo",
+            alternarResumo
+        ],
+
+        [
+            "botaoHistorico",
+            alternarHistorico
+        ],
+
+        [
+            "botaoProdutos",
+            alternarProdutos
+        ],
+
+        [
+            "botaoLimpar",
+            limparLista
+        ],
+
+        [
+            "botaoLimparHistorico",
+            limparHistorico
+        ]
+    ];
+
+
+    eventos.forEach(
+        ([id, funcao]) => {
+
+            const elemento =
+                el(id);
+
+
+            if (elemento) {
+
+                elemento.addEventListener(
+                    "click",
+                    funcao
+                );
+            }
+        }
+    );
+}
+
+
+// ==================================================
+// GLOBAIS
+// ==================================================
+
+window.alternarResumo =
+    alternarResumo;
+
+window.alternarHistorico =
+    alternarHistorico;
+
+window.alternarProdutos =
+    alternarProdutos;
