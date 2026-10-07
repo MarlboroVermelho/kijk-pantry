@@ -1,4 +1,4 @@
-const VERSAO = "1.3";
+const VERSAO = "1.3.1";
 
 const CHAVE_LISTA = "kijkPantryLista";
 const CHAVE_PRODUTOS = "kijkPantryProdutos";
@@ -112,28 +112,21 @@ function salvarHistorico() {
 
 function mostrarMensagem(texto) {
 
-    const toast =
-        el("toast");
+    const toast = el("toast");
 
     if (!toast) {
         return;
     }
 
-
     clearTimeout(timerToast);
 
-    toast.textContent =
-        texto;
-
-    toast.hidden =
-        false;
-
+    toast.textContent = texto;
+    toast.hidden = false;
 
     timerToast =
         setTimeout(() => {
 
-            toast.hidden =
-                true;
+            toast.hidden = true;
 
         }, 2300);
 }
@@ -227,13 +220,10 @@ function atualizarHistorico() {
     }
 
 
-    historicoBox.innerHTML =
-        "";
+    historicoBox.innerHTML = "";
 
 
-    if (
-        historico.length === 0
-    ) {
+    if (historico.length === 0) {
 
         historicoBox.innerHTML = `
             <div class="estado-vazio">
@@ -311,61 +301,10 @@ function atualizarHistorico() {
 
 
 // ==================================================
-// CÁLCULOS
+// IDENTIFICAÇÃO
 // ==================================================
 
-function diferencaDias(
-    dataInicial,
-    dataFinal
-) {
-
-    const inicio =
-        new Date(dataInicial);
-
-    const fim =
-        new Date(dataFinal);
-
-
-    return (
-        fim - inicio
-    ) / (
-        1000 *
-        60 *
-        60 *
-        24
-    );
-}
-
-
-function media(valores) {
-
-    if (
-        valores.length === 0
-    ) {
-
-        return null;
-    }
-
-
-    return (
-        valores.reduce(
-            (total, valor) =>
-                total + valor,
-            0
-        ) /
-        valores.length
-    );
-}
-
-
-// ==================================================
-// IDENTIFICAÇÃO DE PRODUTO
-// ==================================================
-
-function mesmoProduto(
-    produto,
-    evento
-) {
+function mesmoProduto(produto, evento) {
 
     if (
         produto.ean &&
@@ -380,9 +319,9 @@ function mesmoProduto(
 
 
     return (
-        String(produto.nome)
+        String(produto.nome || "")
             .toLowerCase() ===
-        String(evento.nome)
+        String(evento.nome || "")
             .toLowerCase()
     );
 }
@@ -407,8 +346,50 @@ function eventosDoProduto(produto) {
 
 
 // ==================================================
-// RESUMO DE PRODUTO
+// CÁLCULOS
 // ==================================================
+
+function diferencaDias(
+    dataInicial,
+    dataFinal
+) {
+
+    const inicio =
+        new Date(dataInicial);
+
+    const fim =
+        new Date(dataFinal);
+
+
+    return (
+        fim - inicio
+    ) /
+    (
+        1000 *
+        60 *
+        60 *
+        24
+    );
+}
+
+
+function media(valores) {
+
+    if (valores.length === 0) {
+        return null;
+    }
+
+
+    return (
+        valores.reduce(
+            (total, valor) =>
+                total + valor,
+            0
+        ) /
+        valores.length
+    );
+}
+
 
 function calcularResumoProduto(produto) {
 
@@ -464,9 +445,7 @@ function calcularResumoProduto(produto) {
 
     const ultimoEvento =
         eventos.length
-            ? eventos[
-                eventos.length - 1
-              ]
+            ? eventos[eventos.length - 1]
             : null;
 
 
@@ -534,7 +513,7 @@ function formatarDuracao(dias) {
 
 
 // ==================================================
-// TODOS OS PRODUTOS CONHECIDOS
+// PRODUTOS CONHECIDOS
 // ==================================================
 
 function obterProdutosConhecidos() {
@@ -607,17 +586,13 @@ function calcularPrevisao(produto) {
 
         return {
 
-            produto:
-                produto,
+            produto: produto,
 
-            situacao:
-                "acabou",
+            situacao: "acabou",
 
-            diasRestantes:
-                0,
+            diasRestantes: 0,
 
-            dataPrevista:
-                null,
+            dataPrevista: null,
 
             duracaoMedia:
                 resumo.duracaoMedia
@@ -727,17 +702,13 @@ function textoPrevisao(previsao) {
         previsao.diasRestantes;
 
 
-    if (
-        dias <= 0
-    ) {
+    if (dias <= 0) {
 
         const atraso =
             Math.abs(dias);
 
 
-        if (
-            atraso < 1
-        ) {
+        if (atraso < 1) {
 
             return "Pode estar acabando hoje";
         }
@@ -750,17 +721,13 @@ function textoPrevisao(previsao) {
     }
 
 
-    if (
-        dias < 1
-    ) {
+    if (dias < 1) {
 
         return "Pode acabar hoje";
     }
 
 
-    if (
-        dias < 2
-    ) {
+    if (dias < 2) {
 
         return "Pode acabar amanhã";
     }
@@ -774,29 +741,17 @@ function textoPrevisao(previsao) {
 
 function tituloSituacao(situacao) {
 
-    if (
-        situacao === "acabou"
-    ) {
-
+    if (situacao === "acabou") {
         return "NA LISTA";
     }
 
-
-    if (
-        situacao === "provavel"
-    ) {
-
+    if (situacao === "provavel") {
         return "PROVÁVEL";
     }
 
-
-    if (
-        situacao === "atencao"
-    ) {
-
+    if (situacao === "atencao") {
         return "ATENÇÃO";
     }
-
 
     return "NORMAL";
 }
@@ -813,8 +768,7 @@ function atualizarPrevisoes() {
     }
 
 
-    previsoesBox.innerHTML =
-        "";
+    previsoesBox.innerHTML = "";
 
 
     const produtosConhecidos =
@@ -835,9 +789,7 @@ function atualizarPrevisoes() {
             );
 
 
-    if (
-        previsoes.length === 0
-    ) {
+    if (previsoes.length === 0) {
 
         previsoesBox.innerHTML = `
             <div class="estado-previsao-vazio">
@@ -864,7 +816,6 @@ function atualizarPrevisoes() {
                 a.situacao === "acabou" &&
                 b.situacao !== "acabou"
             ) {
-
                 return -1;
             }
 
@@ -873,7 +824,6 @@ function atualizarPrevisoes() {
                 b.situacao === "acabou" &&
                 a.situacao !== "acabou"
             ) {
-
                 return 1;
             }
 
@@ -886,12 +836,9 @@ function atualizarPrevisoes() {
     );
 
 
-    const principais =
-        previsoes.slice(0, 5);
-
-
-    principais.forEach(
-        previsao => {
+    previsoes
+        .slice(0, 5)
+        .forEach(previsao => {
 
             const linha =
                 document.createElement(
@@ -917,7 +864,6 @@ function atualizarPrevisoes() {
 
                 </div>
 
-
                 <span
                     class="
                         previsao-status
@@ -936,8 +882,7 @@ function atualizarPrevisoes() {
             previsoesBox.appendChild(
                 linha
             );
-        }
-    );
+        });
 }
 
 
@@ -956,8 +901,7 @@ function atualizarResumo() {
     }
 
 
-    resumoBox.innerHTML =
-        "";
+    resumoBox.innerHTML = "";
 
 
     const produtosConhecidos =
@@ -978,148 +922,144 @@ function atualizarResumo() {
     }
 
 
-    produtosConhecidos.forEach(
-        produto => {
+    produtosConhecidos.forEach(produto => {
 
-            const resumo =
-                calcularResumoProduto(
-                    produto
-                );
-
-
-            const previsao =
-                calcularPrevisao(
-                    produto
-                );
+        const resumo =
+            calcularResumoProduto(
+                produto
+            );
 
 
-            const card =
-                document.createElement(
-                    "div"
-                );
+        const previsao =
+            calcularPrevisao(
+                produto
+            );
 
 
-            card.className =
-                "resumo-produto";
+        const card =
+            document.createElement(
+                "div"
+            );
 
 
-            let ultimoTexto =
-                "Nenhum evento";
+        card.className =
+            "resumo-produto";
 
 
-            if (
-                resumo.ultimoEvento
-            ) {
-
-                ultimoTexto =
-                    resumo.ultimoEvento.tipo ===
-                    "acabou"
-                        ? "ACABOU"
-                        : "COMPRADO";
-            }
+        let ultimoTexto =
+            "Nenhum evento";
 
 
-            let previsaoHTML = `
+        if (resumo.ultimoEvento) {
+
+            ultimoTexto =
+                resumo.ultimoEvento.tipo ===
+                "acabou"
+                    ? "ACABOU"
+                    : "COMPRADO";
+        }
+
+
+        let previsaoHTML = `
+
+            <div class="previsao-resumo">
+                Previsão ainda indisponível
+            </div>
+        `;
+
+
+        if (previsao) {
+
+            previsaoHTML = `
 
                 <div class="previsao-resumo">
-                    Previsão ainda indisponível
+                    ${textoPrevisao(previsao)}
                 </div>
             `;
+        }
 
 
-            if (previsao) {
+        card.innerHTML = `
 
-                previsaoHTML = `
+            <div class="resumo-topo">
 
-                    <div class="previsao-resumo">
-                        ${textoPrevisao(previsao)}
-                    </div>
-                `;
-            }
+                <strong>
+                    ${produto.nome}
+                </strong>
+
+                <span class="ultimo-evento">
+                    ${ultimoTexto}
+                </span>
+
+            </div>
 
 
-            card.innerHTML = `
+            <div class="metricas">
 
-                <div class="resumo-topo">
+                <div class="metrica">
+
+                    <span>
+                        Duração média
+                    </span>
 
                     <strong>
-                        ${produto.nome}
+                        ${
+                            formatarDuracao(
+                                resumo.duracaoMedia
+                            )
+                        }
                     </strong>
 
-                    <span class="ultimo-evento">
-                        ${ultimoTexto}
-                    </span>
-
                 </div>
 
 
-                <div class="metricas">
-
-                    <div class="metrica">
-
-                        <span>
-                            Duração média
-                        </span>
-
-                        <strong>
-                            ${
-                                formatarDuracao(
-                                    resumo.duracaoMedia
-                                )
-                            }
-                        </strong>
-
-                    </div>
-
-
-                    <div class="metrica">
-
-                        <span>
-                            Reposição média
-                        </span>
-
-                        <strong>
-                            ${
-                                formatarDuracao(
-                                    resumo.reposicaoMedia
-                                )
-                            }
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                ${previsaoHTML}
-
-
-                <div class="resumo-rodape">
+                <div class="metrica">
 
                     <span>
-                        Ciclos de consumo:
-                        ${resumo.ciclosDuracao}
+                        Reposição média
                     </span>
 
-                    <span>
-                        Reposições medidas:
-                        ${resumo.ciclosReposicao}
-                    </span>
+                    <strong>
+                        ${
+                            formatarDuracao(
+                                resumo.reposicaoMedia
+                            )
+                        }
+                    </strong>
 
                 </div>
-            `;
+
+            </div>
 
 
-            resumoBox.appendChild(
-                card
-            );
-        }
-    );
+            ${previsaoHTML}
+
+
+            <div class="resumo-rodape">
+
+                <span>
+                    Ciclos de consumo:
+                    ${resumo.ciclosDuracao}
+                </span>
+
+                <span>
+                    Reposições medidas:
+                    ${resumo.ciclosReposicao}
+                </span>
+
+            </div>
+        `;
+
+
+        resumoBox.appendChild(
+            card
+        );
+    });
 }
 
 
 // ==================================================
-// LISTA DE COMPRAS
+// LISTA
 // ==================================================
 
 function totalItens() {
@@ -1146,8 +1086,7 @@ function atualizarLista() {
     }
 
 
-    lista.innerHTML =
-        "";
+    lista.innerHTML = "";
 
 
     if (contador) {
@@ -1157,9 +1096,7 @@ function atualizarLista() {
     }
 
 
-    if (
-        itens.length === 0
-    ) {
+    if (itens.length === 0) {
 
         lista.innerHTML = `
             <div class="estado-vazio">
@@ -1209,7 +1146,6 @@ function atualizarLista() {
                         −
                     </button>
 
-
                     <button
                         class="acao quantidade"
                         data-acao="mais"
@@ -1217,7 +1153,6 @@ function atualizarLista() {
                     >
                         +
                     </button>
-
 
                     <button
                         class="acao concluir"
@@ -1340,17 +1275,13 @@ function lidarCliqueLista(event) {
     }
 
 
-    if (
-        acao === "mais"
-    ) {
+    if (acao === "mais") {
 
         item.quantidade++;
     }
 
 
-    if (
-        acao === "menos"
-    ) {
+    if (acao === "menos") {
 
         item.quantidade--;
 
@@ -1392,6 +1323,7 @@ function lidarCliqueLista(event) {
 
 
     salvarLista();
+
     atualizarLista();
     atualizarPrevisoes();
 }
@@ -1422,13 +1354,14 @@ function limparLista() {
 
 
     salvarLista();
+
     atualizarLista();
     atualizarPrevisoes();
 }
 
 
 // ==================================================
-// PRODUTOS CADASTRADOS
+// PRODUTOS
 // ==================================================
 
 function buscarProdutoPorEAN(ean) {
@@ -1438,36 +1371,6 @@ function buscarProdutoPorEAN(ean) {
             String(produto.ean) ===
             String(ean)
     );
-}
-
-
-function contarEventosProduto(produto) {
-
-    return eventosDoProduto(
-        produto
-    ).length;
-}
-
-
-function ultimoEventoProduto(produto) {
-
-    const eventos =
-        eventosDoProduto(
-            produto
-        );
-
-
-    if (
-        eventos.length === 0
-    ) {
-
-        return null;
-    }
-
-
-    return eventos[
-        eventos.length - 1
-    ];
 }
 
 
@@ -1486,7 +1389,6 @@ function obterProdutosFiltrados() {
 
 
     if (!termo) {
-
         return [...produtos];
     }
 
@@ -1515,6 +1417,174 @@ function obterProdutosFiltrados() {
 }
 
 
+// ==================================================
+// EDITAR PRODUTO
+// ==================================================
+
+function editarProduto(produto) {
+
+    if (!produto) {
+        return;
+    }
+
+
+    const nomeAtual =
+        String(
+            produto.nome || ""
+        );
+
+
+    const novoNome =
+        prompt(
+            "Novo nome do produto:",
+            nomeAtual
+        );
+
+
+    if (
+        !novoNome ||
+        !novoNome.trim()
+    ) {
+
+        return;
+    }
+
+
+    const nomeLimpo =
+        novoNome.trim();
+
+
+    if (
+        nomeLimpo ===
+        nomeAtual
+    ) {
+
+        return;
+    }
+
+
+    produto.nome =
+        nomeLimpo;
+
+
+    /*
+        Atualiza também a lista atual,
+        caso o mesmo EAN esteja nela.
+    */
+
+    itens.forEach(item => {
+
+        if (
+            produto.ean &&
+            item.ean &&
+            String(item.ean) ===
+            String(produto.ean)
+        ) {
+
+            item.nome =
+                nomeLimpo;
+        }
+    });
+
+
+    /*
+        Também corrigimos o nome nos eventos antigos
+        que têm o MESMO EAN.
+
+        Isso mantém o histórico legível sem perder
+        datas nem ciclos.
+    */
+
+    historico.forEach(evento => {
+
+        if (
+            produto.ean &&
+            evento.ean &&
+            String(evento.ean) ===
+            String(produto.ean)
+        ) {
+
+            evento.nome =
+                nomeLimpo;
+        }
+    });
+
+
+    salvarProdutos();
+    salvarLista();
+    salvarHistorico();
+
+
+    atualizarProdutos();
+    atualizarLista();
+    atualizarHistorico();
+    atualizarResumo();
+    atualizarPrevisoes();
+
+
+    mostrarMensagem(
+        `${nomeAtual} alterado para ${nomeLimpo}`
+    );
+}
+
+
+// ==================================================
+// EXCLUIR PRODUTO
+// ==================================================
+
+function excluirProduto(produto) {
+
+    if (!produto) {
+        return;
+    }
+
+
+    const confirmar =
+        confirm(
+            `Excluir "${produto.nome}" dos produtos cadastrados?\n\nO histórico será mantido.`
+        );
+
+
+    if (!confirmar) {
+        return;
+    }
+
+
+    const indice =
+        produtos.indexOf(
+            produto
+        );
+
+
+    if (indice === -1) {
+        return;
+    }
+
+
+    produtos.splice(
+        indice,
+        1
+    );
+
+
+    salvarProdutos();
+
+
+    atualizarProdutos();
+    atualizarResumo();
+    atualizarPrevisoes();
+
+
+    mostrarMensagem(
+        `${produto.nome} removido do cadastro`
+    );
+}
+
+
+// ==================================================
+// TELA DE PRODUTOS
+// ==================================================
+
 function atualizarProdutos() {
 
     const produtosBox =
@@ -1529,8 +1599,7 @@ function atualizarProdutos() {
     }
 
 
-    produtosBox.innerHTML =
-        "";
+    produtosBox.innerHTML = "";
 
 
     if (contadorProdutos) {
@@ -1574,299 +1643,238 @@ function atualizarProdutos() {
     }
 
 
-    filtrados.forEach(
-        produto => {
+    filtrados.forEach(produto => {
 
-            const indiceReal =
-                produtos.findIndex(
-                    item =>
-                        item === produto
-                );
-
-
-            const totalEventos =
-                contarEventosProduto(
-                    produto
-                );
-
-
-            const ultimoEvento =
-                ultimoEventoProduto(
-                    produto
-                );
-
-
-            const linha =
-                document.createElement(
-                    "div"
-                );
-
-
-            linha.className =
-                "produto-card";
-
-
-            linha.innerHTML = `
-
-                <div class="produto-info">
-
-                    <div class="produto-nome-linha">
-
-                        <strong>
-                            ${produto.nome}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="produto-ean">
-                        EAN ${produto.ean}
-                    </div>
-
-
-                    <div class="produto-estatisticas">
-
-                        <span>
-                            ${
-                                totalEventos === 1
-                                    ? "1 evento"
-                                    : `${totalEventos} eventos`
-                            }
-                        </span>
-
-                        <span>
-                            Último:
-                            ${
-                                ultimoEvento
-                                    ? formatarDataCurta(
-                                        ultimoEvento.data
-                                      )
-                                    : "sem registro"
-                            }
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                <div class="produto-acoes">
-
-                    <button
-                        class="produto-botao editar"
-                        data-produto-acao="editar"
-                        data-produto-indice="${indiceReal}"
-                    >
-                        Editar
-                    </button>
-
-
-                    <button
-                        class="produto-botao excluir"
-                        data-produto-acao="excluir"
-                        data-produto-indice="${indiceReal}"
-                    >
-                        Excluir
-                    </button>
-
-                </div>
-            `;
-
-
-            produtosBox.appendChild(
-                linha
+        const eventos =
+            eventosDoProduto(
+                produto
             );
-        }
-    );
-}
 
 
-// ==================================================
-// EDITAR PRODUTO
-// ==================================================
-
-function editarProduto(indice) {
-
-    const produto =
-        produtos[indice];
+        const ultimoEvento =
+            eventos.length
+                ? eventos[
+                    eventos.length - 1
+                  ]
+                : null;
 
 
-    if (!produto) {
-        return;
-    }
+        const card =
+            document.createElement(
+                "div"
+            );
 
 
-    const novoNome =
-        prompt(
-            "Novo nome do produto:",
-            produto.nome
+        card.className =
+            "produto-card";
+
+
+        // -------------------------------
+        // INFORMAÇÕES
+        // -------------------------------
+
+        const info =
+            document.createElement(
+                "div"
+            );
+
+
+        info.className =
+            "produto-info";
+
+
+        const nome =
+            document.createElement(
+                "strong"
+            );
+
+
+        nome.textContent =
+            produto.nome ||
+            "Produto sem nome";
+
+
+        const ean =
+            document.createElement(
+                "div"
+            );
+
+
+        ean.className =
+            "produto-ean";
+
+
+        ean.textContent =
+            produto.ean
+                ? `EAN ${produto.ean}`
+                : "Sem EAN";
+
+
+        const estatisticas =
+            document.createElement(
+                "div"
+            );
+
+
+        estatisticas.className =
+            "produto-estatisticas";
+
+
+        const totalEventos =
+            document.createElement(
+                "span"
+            );
+
+
+        totalEventos.textContent =
+            eventos.length === 1
+                ? "1 evento"
+                : `${eventos.length} eventos`;
+
+
+        const ultimaMovimentacao =
+            document.createElement(
+                "span"
+            );
+
+
+        ultimaMovimentacao.textContent =
+            ultimoEvento
+                ? `Último: ${formatarDataCurta(
+                    ultimoEvento.data
+                  )}`
+                : "Último: sem registro";
+
+
+        estatisticas.appendChild(
+            totalEventos
         );
 
 
-    if (
-        !novoNome ||
-        !novoNome.trim()
-    ) {
-
-        return;
-    }
+        estatisticas.appendChild(
+            ultimaMovimentacao
+        );
 
 
-    const nomeLimpo =
-        novoNome.trim();
+        info.appendChild(
+            nome
+        );
+
+        info.appendChild(
+            ean
+        );
+
+        info.appendChild(
+            estatisticas
+        );
 
 
-    if (
-        nomeLimpo ===
-        produto.nome
-    ) {
+        // -------------------------------
+        // BOTÕES
+        // -------------------------------
 
-        return;
-    }
-
-
-    const nomeAntigo =
-        produto.nome;
+        const acoes =
+            document.createElement(
+                "div"
+            );
 
 
-    produto.nome =
-        nomeLimpo;
+        acoes.className =
+            "produto-acoes";
 
 
-    /*
-        Se o produto estiver na lista,
-        atualizamos o nome também.
+        const botaoEditar =
+            document.createElement(
+                "button"
+            );
 
-        Fazemos a associação pelo EAN para
-        não alterar outro produto por engano.
-    */
 
-    itens.forEach(item => {
+        botaoEditar.type =
+            "button";
 
-        if (
-            produto.ean &&
-            item.ean &&
-            String(item.ean) ===
-            String(produto.ean)
-        ) {
 
-            item.nome =
-                nomeLimpo;
-        }
+        botaoEditar.className =
+            "produto-botao editar";
+
+
+        botaoEditar.textContent =
+            "Editar";
+
+
+        /*
+            Aqui está a principal correção:
+            o botão recebe diretamente o produto.
+        */
+
+        botaoEditar.addEventListener(
+            "click",
+            () => {
+
+                editarProduto(
+                    produto
+                );
+            }
+        );
+
+
+        const botaoExcluir =
+            document.createElement(
+                "button"
+            );
+
+
+        botaoExcluir.type =
+            "button";
+
+
+        botaoExcluir.className =
+            "produto-botao excluir";
+
+
+        botaoExcluir.textContent =
+            "Excluir";
+
+
+        botaoExcluir.addEventListener(
+            "click",
+            () => {
+
+                excluirProduto(
+                    produto
+                );
+            }
+        );
+
+
+        acoes.appendChild(
+            botaoEditar
+        );
+
+
+        acoes.appendChild(
+            botaoExcluir
+        );
+
+
+        card.appendChild(
+            info
+        );
+
+
+        card.appendChild(
+            acoes
+        );
+
+
+        produtosBox.appendChild(
+            card
+        );
     });
-
-
-    salvarProdutos();
-    salvarLista();
-
-
-    atualizarProdutos();
-    atualizarLista();
-    atualizarResumo();
-    atualizarPrevisoes();
-
-
-    mostrarMensagem(
-        `${nomeAntigo} renomeado para ${nomeLimpo}`
-    );
 }
 
 
 // ==================================================
-// EXCLUIR PRODUTO
-// ==================================================
-
-function excluirProduto(indice) {
-
-    const produto =
-        produtos[indice];
-
-
-    if (!produto) {
-        return;
-    }
-
-
-    const confirmar =
-        confirm(
-            `Excluir "${produto.nome}" dos produtos cadastrados?\n\nO histórico de consumo não será apagado.`
-        );
-
-
-    if (!confirmar) {
-        return;
-    }
-
-
-    produtos.splice(
-        indice,
-        1
-    );
-
-
-    salvarProdutos();
-
-    atualizarProdutos();
-    atualizarResumo();
-    atualizarPrevisoes();
-
-
-    mostrarMensagem(
-        `${produto.nome} removido do cadastro`
-    );
-}
-
-
-// ==================================================
-// CLIQUES NA ÁREA DE PRODUTOS
-// ==================================================
-
-function lidarCliqueProdutos(event) {
-
-    const botao =
-        event.target.closest(
-            "[data-produto-acao]"
-        );
-
-
-    if (!botao) {
-        return;
-    }
-
-
-    const acao =
-        botao.dataset.produtoAcao;
-
-
-    const indice =
-        Number(
-            botao.dataset.produtoIndice
-        );
-
-
-    if (
-        acao === "editar"
-    ) {
-
-        editarProduto(
-            indice
-        );
-    }
-
-
-    if (
-        acao === "excluir"
-    ) {
-
-        excluirProduto(
-            indice
-        );
-    }
-}
-
-
-// ==================================================
-// PROCESSAMENTO DE EAN
+// EAN
 // ==================================================
 
 function processarEAN(ean) {
@@ -1894,11 +1902,6 @@ function processarEAN(ean) {
             ean
         );
 
-
-    /*
-        Se o EAN já existe, nunca cadastramos
-        outro produto com o mesmo código.
-    */
 
     if (produto) {
 
@@ -1936,10 +1939,6 @@ function processarEAN(ean) {
         nome.trim();
 
 
-    /*
-        Segunda verificação de segurança.
-    */
-
     if (
         buscarProdutoPorEAN(ean)
     ) {
@@ -1963,6 +1962,7 @@ function processarEAN(ean) {
 
 
     salvarProdutos();
+
     atualizarProdutos();
 
 
@@ -2228,7 +2228,7 @@ function alternarProdutos() {
 
 
 // ==================================================
-// LIMPAR HISTÓRICO
+// LIMPEZA
 // ==================================================
 
 function limparHistorico() {
@@ -2311,7 +2311,9 @@ async function abrirScanner() {
         fps: 10,
 
         qrbox: {
+
             width: 280,
+
             height: 140
         }
     };
@@ -2460,19 +2462,6 @@ function configurarEventos() {
         lista.addEventListener(
             "click",
             lidarCliqueLista
-        );
-    }
-
-
-    const produtosBox =
-        el("produtosBox");
-
-
-    if (produtosBox) {
-
-        produtosBox.addEventListener(
-            "click",
-            lidarCliqueProdutos
         );
     }
 
