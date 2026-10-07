@@ -9,10 +9,10 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>KIJK Pantry V2.2</title>
+    <title>KIJK Pantry V2.3</title>
 
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css?v=2.2">
+    <link rel="stylesheet" href="style.css?v=2.3">
 
     <meta name="theme-color" content="#171717">
 </head>
@@ -32,7 +32,9 @@
 
             <div class="contador">
                 <strong id="contador">0</strong>
-                <span>itens</span>
+                <span id="contadorRotulo">
+                    restantes
+                </span>
             </div>
 
         </header>
@@ -296,10 +298,17 @@
 
             </div>
 
+            <p class="ultimo-backup-info">
+                Último backup:
+                <strong id="ultimoBackup">
+                    Nunca
+                </strong>
+            </p>
             <button
                 id="botaoExportar"
                 class="botao backup-principal"
             >
+
                 Exportar backup
             </button>
 
@@ -324,7 +333,7 @@
         </section>
 
         <footer>
-            KIJK Pantry V2.2
+            KIJK Pantry V2.3
         </footer>
 
     </main>
@@ -373,7 +382,7 @@
         src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"
     ></script>
 
-    <script src="app.js?v=2.2"></script>
+    <script src="app.js?v=2.3"></script>
 
 
     <!-- Cache continua desativado durante o desenvolvimento -->

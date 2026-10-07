@@ -1,8 +1,9 @@
-const VERSAO = "2.2";
+const VERSAO = "2.3";
 
 const CHAVE_LISTA = "kijkPantryLista";
 const CHAVE_PRODUTOS = "kijkPantryProdutos";
 const CHAVE_HISTORICO = "kijkPantryHistorico";
+const CHAVE_ULTIMO_BACKUP ="kijkPantryUltimoBackup";
 
 let itens = [];
 let produtos = [];
@@ -370,6 +371,30 @@ function mesmoProduto(produto, evento) {
     );
 }
 
+function normalizarNome(nome) {
+
+    return String(
+        nome || ""
+    )
+        .trim()
+        .toLowerCase();
+}
+
+
+function buscarProdutoPorNome(nome) {
+
+    const nomeNormalizado =
+        normalizarNome(nome);
+
+
+    return produtos.find(
+        produto =>
+            normalizarNome(
+                produto.nome
+            ) ===
+            nomeNormalizado
+    );
+}
 
 function eventosDoProduto(produto) {
 
@@ -491,21 +516,38 @@ function calcularResumoProduto(produto) {
         );
 
 
+    /*
+        PREVISTO é um evento operacional
+        da lista, não um evento real de
+        consumo.
+
+        Portanto ele NÃO participa dos
+        ciclos COMPRADO -> ACABOU.
+    */
+
+    const eventosConsumo =
+        eventos.filter(
+            evento =>
+                evento.tipo !==
+                "previsto"
+        );
+
+
     const duracoes = [];
     const reposicoes = [];
 
 
     for (
         let i = 0;
-        i < eventos.length - 1;
+        i < eventosConsumo.length - 1;
         i++
     ) {
 
         const atual =
-            eventos[i];
+            eventosConsumo[i];
 
         const proximo =
-            eventos[i + 1];
+            eventosConsumo[i + 1];
 
 
         if (
@@ -529,19 +571,6 @@ function calcularResumoProduto(produto) {
                 );
 
 
-            /*
-                O aprendizado passa a representar
-                duração média POR UNIDADE.
-
-                Exemplo:
-
-                comprado x3
-                acabou após 12 dias
-
-                duração observada:
-                4 dias por unidade
-            */
-
             duracoes.push(
                 diasLote /
                 quantidade
@@ -563,6 +592,12 @@ function calcularResumoProduto(produto) {
         }
     }
 
+
+    /*
+        Para interface e previsão usamos
+        o último evento REAL da sequência
+        completa, inclusive PREVISTO.
+    */
 
     const ultimoEvento =
         eventos.length
@@ -1720,6 +1755,8 @@ function atualizarLista() {
     const contador =
         el("contador");
 
+    const contadorRotulo =
+        el("contadorRotulo");
 
     if (!lista) {
         return;
@@ -1735,12 +1772,19 @@ function atualizarLista() {
             totalItens();
     }
 
+    if (contadorRotulo) {
+
+        contadorRotulo.textContent =
+            totalItens() === 1
+                ? "restante"
+                : "restantes";
+    }
 
     if (itens.length === 0) {
 
         lista.innerHTML = `
             <div class="estado-vazio">
-                Nenhum item na lista
+                Nenhum item pendente
             </div>
         `;
 
@@ -1943,6 +1987,20 @@ function removerUltimoEventoDaLista(
     return false;
 }
 
+function obterEventoHistoricoPorId(id) {
+
+    if (!id) {
+        return null;
+    }
+
+
+    return historico.find(
+        evento =>
+            String(evento.id) ===
+            String(id)
+    ) || null;
+}
+
 function adicionarItem(
     nome,
     ean = null,
@@ -1971,10 +2029,12 @@ function adicionarItem(
 
 
                 return (
-                    item.nome
-                        .toLowerCase() ===
-                    nome
-                        .toLowerCase()
+                    normalizarNome(
+                        item.nome
+                    ) ===
+                    normalizarNome(
+                        nome
+                    )
                 );
             }
         );
@@ -1994,7 +2054,109 @@ function adicionarItem(
         );
 
 
-        item.quantidade++;
+        /*
+            Se já estava na lista por PREVISÃO
+            e agora realmente acabou:
+
+            PREVISTO -> ACABOU
+
+            sem aumentar a quantidade.
+        */
+
+        let previsaoConvertida =
+            false;
+
+
+        if (
+            registrar &&
+            tipoEvento === "acabou"
+        ) {
+
+            for (
+                let i =
+                    item.eventosLista.length - 1;
+
+                i >= 0;
+
+                i--
+            ) {
+
+                const id =
+                    item.eventosLista[i];
+
+
+                const evento =
+                    obterEventoHistoricoPorId(
+                        id
+                    );
+
+
+                if (
+                    evento &&
+                    evento.tipo ===
+                        "previsto"
+                ) {
+
+                    removerEventoHistoricoPorId(
+                        id
+                    );
+
+
+                    item.eventosLista.splice(
+                        i,
+                        1
+                    );
+
+
+                    const novoEventoId =
+                        registrarEvento(
+                            "acabou",
+                            nome,
+                            ean ||
+                                item.ean ||
+                                null,
+                            1
+                        );
+
+
+                    item.eventosLista.push(
+                        novoEventoId
+                    );
+
+
+                    previsaoConvertida =
+                        true;
+
+
+                    break;
+                }
+            }
+        }
+
+
+        if (!previsaoConvertida) {
+
+            item.quantidade++;
+
+
+            if (registrar) {
+
+                const eventoId =
+                    registrarEvento(
+                        tipoEvento,
+                        nome,
+                        ean ||
+                            item.ean ||
+                            null,
+                        1
+                    );
+
+
+                item.eventosLista.push(
+                    eventoId
+                );
+            }
+        }
 
 
         if (
@@ -2027,30 +2189,34 @@ function adicionarItem(
         itens.push(
             item
         );
-    }
 
 
-    if (registrar) {
+        if (registrar) {
 
-        const eventoId =
-            registrarEvento(
-                tipoEvento,
-                nome,
-                ean,
-                1
+            const eventoId =
+                registrarEvento(
+                    tipoEvento,
+                    nome,
+                    ean,
+                    1
+                );
+
+
+            item.eventosLista.push(
+                eventoId
             );
-
-
-        item.eventosLista.push(
-            eventoId
-        );
+        }
     }
 
 
     salvarLista();
+    salvarHistorico();
 
     atualizarLista();
+    atualizarHistorico();
+    atualizarResumo();
     atualizarPrevisoes();
+    atualizarProdutos();
 }
 
 
@@ -2144,7 +2310,7 @@ function lidarCliqueLista(event) {
 
 
     if (
-        acao === "comprado"
+    acao === "comprado"
     ) {
 
         registrarEvento(
@@ -2161,9 +2327,20 @@ function lidarCliqueLista(event) {
         );
 
 
-        mostrarMensagem(
-            `${item.nome} marcado como comprado`
-        );
+        if (
+            itens.length === 0
+        ) {
+
+            mostrarMensagem(
+                "Compras concluídas ✓"
+            );
+
+        } else {
+
+            mostrarMensagem(
+                `${item.nome} marcado como comprado`
+            );
+        }
     }
 
 
@@ -2324,6 +2501,10 @@ function editarProduto(produto) {
         );
 
 
+    const eanOriginal =
+        produto.ean || null;
+
+
     const novoNome =
         prompt(
             "Novo nome do produto:",
@@ -2357,34 +2538,68 @@ function editarProduto(produto) {
         nomeLimpo;
 
 
-    itens.forEach(item => {
+    itens.forEach(
+        item => {
 
-        if (
-            produto.ean &&
-            item.ean &&
-            String(item.ean) ===
-            String(produto.ean)
-        ) {
+            const correspondeEAN =
+                eanOriginal &&
+                item.ean &&
+                String(item.ean) ===
+                String(eanOriginal);
 
-            item.nome =
-                nomeLimpo;
+
+            const correspondeNome =
+                !eanOriginal &&
+                normalizarNome(
+                    item.nome
+                ) ===
+                normalizarNome(
+                    nomeAtual
+                );
+
+
+            if (
+                correspondeEAN ||
+                correspondeNome
+            ) {
+
+                item.nome =
+                    nomeLimpo;
+            }
         }
-    });
+    );
 
 
-    historico.forEach(evento => {
+    historico.forEach(
+        evento => {
 
-        if (
-            produto.ean &&
-            evento.ean &&
-            String(evento.ean) ===
-            String(produto.ean)
-        ) {
+            const correspondeEAN =
+                eanOriginal &&
+                evento.ean &&
+                String(evento.ean) ===
+                String(eanOriginal);
 
-            evento.nome =
-                nomeLimpo;
+
+            const correspondeNome =
+                !eanOriginal &&
+                normalizarNome(
+                    evento.nome
+                ) ===
+                normalizarNome(
+                    nomeAtual
+                );
+
+
+            if (
+                correspondeEAN ||
+                correspondeNome
+            ) {
+
+                evento.nome =
+                    nomeLimpo;
+            }
         }
-    });
+    );
 
 
     salvarProdutos();
@@ -2870,9 +3085,59 @@ function adicionarManualmente() {
     }
 
 
+    const nomeLimpo =
+        nome.trim();
+
+
+    let produtoConhecido =
+        buscarProdutoPorNome(
+            nomeLimpo
+        );
+
+
+    const salvarCadastro =
+        confirm(
+            `Deseja salvar "${nomeLimpo}" nos produtos cadastrados?\n\nCancelar = apenas adicionar à lista.`
+        );
+
+
+    if (
+        salvarCadastro &&
+        !produtoConhecido
+    ) {
+
+        produtoConhecido = {
+
+            nome:
+                nomeLimpo,
+
+            ean:
+                null
+        };
+
+
+        produtos.push(
+            produtoConhecido
+        );
+
+
+        salvarProdutos();
+        atualizarProdutos();
+    }
+
+
     adicionarItem(
-        nome.trim(),
-        null
+        nomeLimpo,
+        produtoConhecido
+            ? produtoConhecido.ean
+            : null
+    );
+
+
+    mostrarMensagem(
+        salvarCadastro
+            ? `${nomeLimpo} cadastrado e adicionado`
+            : `${nomeLimpo} adicionado à lista`
     );
 }
 
@@ -2891,6 +3156,24 @@ function atualizarDadosBackup() {
     const backupEventos =
         el("backupEventos");
 
+    const ultimoBackup =
+        el("ultimoBackup");
+
+    if (ultimoBackup) {
+
+    const dataBackup =
+        localStorage.getItem(
+            CHAVE_ULTIMO_BACKUP
+        );
+
+
+    ultimoBackup.textContent =
+        dataBackup
+            ? formatarData(
+                dataBackup
+              )
+            : "Nunca";
+    }
 
     if (backupLista) {
 
@@ -2942,7 +3225,10 @@ function criarBackup() {
 }
 
 
-function exportarBackup() {
+function baixarBackup(
+    prefixo = "kijk-pantry-backup",
+    mostrarAviso = true
+) {
 
     const backup =
         criarBackup();
@@ -2979,7 +3265,23 @@ function exportarBackup() {
     const data =
         agora
             .toISOString()
-            .slice(0, 10);
+            .slice(
+                0,
+                10
+            );
+
+
+    const hora =
+        agora
+            .toTimeString()
+            .slice(
+                0,
+                5
+            )
+            .replace(
+                ":",
+                "-"
+            );
 
 
     const link =
@@ -2993,7 +3295,7 @@ function exportarBackup() {
 
 
     link.download =
-        `kijk-pantry-backup-${data}.json`;
+        `${prefixo}-${data}-${hora}.json`;
 
 
     document.body.appendChild(
@@ -3012,8 +3314,33 @@ function exportarBackup() {
     );
 
 
-    mostrarMensagem(
-        "Backup exportado"
+    const agoraISO =
+        agora.toISOString();
+
+
+    localStorage.setItem(
+        CHAVE_ULTIMO_BACKUP,
+        agoraISO
+    );
+
+
+    atualizarDadosBackup();
+
+
+    if (mostrarAviso) {
+
+        mostrarMensagem(
+            "Backup exportado"
+        );
+    }
+}
+
+
+function exportarBackup() {
+
+    baixarBackup(
+        "kijk-pantry-backup",
+        true
     );
 }
 
@@ -3143,6 +3470,10 @@ function importarBackup(event) {
                 return;
             }
 
+            baixarBackup(
+                "kijk-pantry-seguranca",
+                false
+            );
 
             itens =
                 backup.dados.lista;

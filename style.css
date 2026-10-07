@@ -1173,3 +1173,26 @@ footer {
     background: var(--amarelo-claro);
     color: var(--amarelo);
 }
+/* ==================================================
+   V2.3 - FINAL
+   ================================================== */
+
+.ultimo-backup-info {
+    margin:
+        -2px 0 15px;
+
+    text-align: center;
+
+    color:
+        var(--secundario);
+
+    font-size: 10px;
+}
+
+
+.ultimo-backup-info strong {
+    color:
+        var(--texto);
+
+    font-weight: 600;
+}
