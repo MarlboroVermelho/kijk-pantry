@@ -23,8 +23,11 @@
 body {
     margin: 0;
 
-    background: var(--fundo);
-    color: var(--texto);
+    background:
+        var(--fundo);
+
+    color:
+        var(--texto);
 
     font-family:
         -apple-system,
@@ -36,7 +39,9 @@ body {
 
 button {
     font-family: inherit;
-    -webkit-tap-highlight-color: transparent;
+
+    -webkit-tap-highlight-color:
+        transparent;
 }
 
 
@@ -69,6 +74,7 @@ button {
     margin: 0;
 
     font-size: 29px;
+
     letter-spacing: -1px;
 }
 
@@ -76,7 +82,8 @@ button {
 .topo p {
     margin: 4px 0 0;
 
-    color: var(--secundario);
+    color:
+        var(--secundario);
 
     font-size: 14px;
 }
@@ -88,7 +95,9 @@ button {
 
     border-radius: 19px;
 
-    background: var(--escuro);
+    background:
+        var(--escuro);
+
     color: white;
 
     display: flex;
@@ -96,6 +105,7 @@ button {
     flex-direction: column;
 
     justify-content: center;
+
     align-items: center;
 }
 
@@ -117,7 +127,8 @@ button {
 .card {
     padding: 20px;
 
-    background: var(--card);
+    background:
+        var(--card);
 
     border-radius: 22px;
 
@@ -183,7 +194,8 @@ button {
     gap: 10px;
 
     border-bottom:
-        1px solid var(--borda);
+        1px solid
+        var(--borda);
 }
 
 
@@ -209,7 +221,8 @@ button {
 
 
 .item-quantidade {
-    color: var(--secundario);
+    color:
+        var(--secundario);
 
     font-size: 13px;
 }
@@ -245,12 +258,14 @@ button {
 .quantidade {
     background: #efefec;
 
-    color: var(--texto);
+    color:
+        var(--texto);
 }
 
 
 .concluir {
-    background: var(--verde);
+    background:
+        var(--verde);
 
     color: white;
 }
@@ -288,9 +303,11 @@ button {
 
     background: #e9e9e5;
 
-    color: var(--texto);
+    color:
+        var(--texto);
 
     font-size: 14px;
+
     font-weight: 600;
 }
 
@@ -298,7 +315,8 @@ button {
 .botao.destaque {
     min-height: 64px;
 
-    background: var(--escuro);
+    background:
+        var(--escuro);
 
     color: white;
 
@@ -311,7 +329,8 @@ button {
 
     background: transparent;
 
-    border: 1px solid #d7d6d0;
+    border:
+        1px solid #d7d6d0;
 
     color: #666;
 
@@ -331,6 +350,8 @@ button {
 }
 
 
+/* PRODUTOS */
+
 .produto-cadastrado {
     padding: 14px 0;
 
@@ -341,7 +362,8 @@ button {
     gap: 4px;
 
     border-bottom:
-        1px solid var(--borda);
+        1px solid
+        var(--borda);
 }
 
 
@@ -368,7 +390,8 @@ button {
     padding: 14px 0;
 
     border-bottom:
-        1px solid var(--borda);
+        1px solid
+        var(--borda);
 }
 
 
@@ -405,16 +428,20 @@ button {
 
 
 .evento-tipo.acabou {
-    background: var(--vermelho-claro);
+    background:
+        var(--vermelho-claro);
 
-    color: var(--vermelho);
+    color:
+        var(--vermelho);
 }
 
 
 .evento-tipo.comprado {
-    background: var(--verde-claro);
+    background:
+        var(--verde-claro);
 
-    color: var(--verde);
+    color:
+        var(--verde);
 }
 
 
@@ -431,6 +458,111 @@ button {
     color: #aaa;
 
     font-size: 11px;
+}
+
+
+/* RESUMO */
+
+.resumo-produto {
+    padding: 16px 0;
+
+    border-bottom:
+        1px solid
+        var(--borda);
+}
+
+
+.resumo-produto:last-child {
+    border-bottom: none;
+}
+
+
+.resumo-topo {
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    align-items: center;
+
+    gap: 10px;
+
+    margin-bottom: 13px;
+}
+
+
+.resumo-topo strong {
+    font-size: 16px;
+}
+
+
+.ultimo-evento {
+    padding: 4px 7px;
+
+    border-radius: 7px;
+
+    background: #efefec;
+
+    color: #777;
+
+    font-size: 9px;
+
+    font-weight: 800;
+
+    letter-spacing: .3px;
+}
+
+
+.metricas {
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 10px;
+}
+
+
+.metrica {
+    padding: 12px;
+
+    background:
+        var(--fundo);
+
+    border-radius: 14px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+}
+
+
+.metrica span {
+    color: #888;
+
+    font-size: 11px;
+}
+
+
+.metrica strong {
+    font-size: 14px;
+}
+
+
+.resumo-rodape {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 12px;
+
+    margin-top: 11px;
+
+    color: #999;
+
+    font-size: 10px;
 }
 
 
@@ -463,6 +595,7 @@ button {
 
 .scanner-conteudo {
     width: 100%;
+
     max-width: 480px;
 
     padding: 20px;
@@ -525,7 +658,8 @@ button {
 
     padding: 14px 18px;
 
-    background: var(--escuro);
+    background:
+        var(--escuro);
 
     color: white;
 
