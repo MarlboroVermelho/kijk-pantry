@@ -1,4 +1,4 @@
-const VERSAO = "2.0";
+const VERSAO = "2.1";
 
 const CHAVE_LISTA = "kijkPantryLista";
 const CHAVE_PRODUTOS = "kijkPantryProdutos";
@@ -390,6 +390,54 @@ function media(valores) {
     );
 }
 
+function mediana(valores) {
+
+    if (!valores.length) {
+        return null;
+    }
+
+    const ordenados =
+        [...valores].sort(
+            (a, b) => a - b
+        );
+
+    const meio =
+        Math.floor(
+            ordenados.length / 2
+        );
+
+    if (
+        ordenados.length % 2 === 0
+    ) {
+
+        return (
+            ordenados[meio - 1] +
+            ordenados[meio]
+        ) / 2;
+    }
+
+    return ordenados[meio];
+}
+
+
+function minimo(valores) {
+
+    if (!valores.length) {
+        return null;
+    }
+
+    return Math.min(...valores);
+}
+
+
+function maximo(valores) {
+
+    if (!valores.length) {
+        return null;
+    }
+
+    return Math.max(...valores);
+}
 
 function calcularResumoProduto(produto) {
 
@@ -454,6 +502,15 @@ function calcularResumoProduto(produto) {
         duracaoMedia:
             media(duracoes),
 
+        duracaoMediana:
+            mediana(duracoes),
+
+        duracaoMinima:
+            minimo(duracoes),
+
+        duracaoMaxima:
+            maximo(duracoes),
+
         reposicaoMedia:
             media(reposicoes),
 
@@ -509,6 +566,19 @@ function formatarDuracao(dias) {
 
 
     return `${dias.toFixed(1)} dias`;
+}
+
+function calcularDuracaoReferencia(resumo) {
+
+    if (
+        resumo.duracaoMediana !== null &&
+        resumo.ciclosDuracao >= 3
+    ) {
+
+        return resumo.duracaoMediana;
+    }
+
+    return resumo.duracaoMedia;
 }
 
 
@@ -670,7 +740,14 @@ function calcularConfianca(produto) {
 function calcularPrevisao(produto) {
 
     const resumo =
-        calcularResumoProduto(produto);
+        calcularResumoProduto(
+            produto
+        );
+
+    const duracaoReferencia =
+        calcularDuracaoReferencia(
+            resumo
+        );
 
 
     if (
@@ -698,7 +775,10 @@ function calcularPrevisao(produto) {
             dataPrevista: null,
 
             duracaoMedia:
-                resumo.duracaoMedia
+                resumo.duracaoMedia,
+
+            duracaoReferencia:
+                duracaoReferencia
         };
     }
 
@@ -710,7 +790,7 @@ function calcularPrevisao(produto) {
 
 
     const milissegundosDuracao =
-        resumo.duracaoMedia *
+        duracaoReferencia *
         24 *
         60 *
         60 *
@@ -785,7 +865,10 @@ function calcularPrevisao(produto) {
             dataPrevista,
 
         duracaoMedia:
-            resumo.duracaoMedia
+            resumo.duracaoMedia,
+
+        duracaoReferencia:
+            duracaoReferencia
     };
 }
 
@@ -1452,6 +1535,23 @@ function atualizarResumo() {
             `;
         }
 
+        let faixaTexto =
+            "Sem faixa suficiente";
+
+
+        if (
+            resumo.duracaoMinima !== null &&
+            resumo.duracaoMaxima !== null &&
+            resumo.ciclosDuracao >= 2
+        ) {
+
+            faixaTexto =
+                `${formatarDuracao(
+                    resumo.duracaoMinima
+                )} – ${formatarDuracao(
+                    resumo.duracaoMaxima
+                )}`;
+        }
 
         card.innerHTML = `
 
@@ -1486,6 +1586,17 @@ function atualizarResumo() {
 
                 </div>
 
+                <div class="metrica">
+
+                    <span>
+                        Faixa observada
+                    </span>
+
+                    <strong>
+                        ${faixaTexto}
+                    </strong>
+
+                </div>
 
                 <div class="metrica">
 

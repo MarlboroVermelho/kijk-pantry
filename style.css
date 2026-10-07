@@ -1144,3 +1144,24 @@ footer {
 
     text-align: center;
 }
+/* ==================================================
+   V2.1 - INTELIGÊNCIA DE CONSUMO
+   ================================================== */
+
+.metricas {
+    grid-template-columns:
+        repeat(2, 1fr);
+}
+
+.metricas .metrica:last-child:nth-child(3) {
+    grid-column:
+        1 / -1;
+}
+
+.metrica-faixa {
+    font-size: 12px;
+}
+
+.previsao-resumo {
+    line-height: 1.45;
+}
