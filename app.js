@@ -1,2710 +1,967 @@
-const VERSAO = "1.4";
-
-const CHAVE_LISTA = "kijkPantryLista";
-const CHAVE_PRODUTOS = "kijkPantryProdutos";
-const CHAVE_HISTORICO = "kijkPantryHistorico";
-
-let itens = [];
-let produtos = [];
-let historico = [];
-
-let scanner = null;
-let scannerAtivo = false;
-let leituraEmAndamento = false;
-
-let timerToast = null;
-
-
-// ==================================================
-// INICIALIZAÇÃO
-// ==================================================
-
-document.addEventListener("DOMContentLoaded", () => {
-
-    carregarDados();
-
-    atualizarLista();
-    atualizarProdutos();
-    atualizarHistorico();
-    atualizarResumo();
-    atualizarPrevisoes();
-
-    configurarEventos();
-});
-
-
-// ==================================================
-// ELEMENTOS
-// ==================================================
-
-function el(id) {
-    return document.getElementById(id);
+* {
+    box-sizing: border-box;
 }
 
 
-// ==================================================
-// ARMAZENAMENTO
-// ==================================================
+:root {
+    --fundo: #f3f2ed;
+    --card: #ffffff;
 
-function carregarDados() {
+    --texto: #20211f;
+    --secundario: #85867f;
+    --borda: #e6e5df;
 
-    try {
+    --escuro: #20221f;
 
-        itens =
-            JSON.parse(
-                localStorage.getItem(CHAVE_LISTA)
-            ) || [];
+    --verde: #607b63;
+    --verde-claro: #e6eee5;
 
-        produtos =
-            JSON.parse(
-                localStorage.getItem(CHAVE_PRODUTOS)
-            ) || [];
+    --amarelo: #9b7938;
+    --amarelo-claro: #f3ead5;
 
-        historico =
-            JSON.parse(
-                localStorage.getItem(CHAVE_HISTORICO)
-            ) || [];
-
-    } catch (erro) {
-
-        console.error(
-            "Erro ao carregar dados:",
-            erro
-        );
-
-        itens = [];
-        produtos = [];
-        historico = [];
-    }
+    --vermelho: #9b5149;
+    --vermelho-claro: #f5e6e4;
 }
 
 
-function salvarLista() {
+body {
+    margin: 0;
 
-    localStorage.setItem(
-        CHAVE_LISTA,
-        JSON.stringify(itens)
-    );
+    background: var(--fundo);
+    color: var(--texto);
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
 }
 
 
-function salvarProdutos() {
-
-    localStorage.setItem(
-        CHAVE_PRODUTOS,
-        JSON.stringify(produtos)
-    );
+button,
+input {
+    font-family: inherit;
 }
 
 
-function salvarHistorico() {
-
-    localStorage.setItem(
-        CHAVE_HISTORICO,
-        JSON.stringify(historico)
-    );
+button {
+    -webkit-tap-highlight-color: transparent;
 }
 
 
-// ==================================================
-// MENSAGENS
-// ==================================================
+.app {
+    width: 100%;
+    max-width: 520px;
 
-function mostrarMensagem(texto) {
+    margin: auto;
 
-    const toast = el("toast");
-
-    if (!toast) {
-        return;
-    }
-
-    clearTimeout(timerToast);
-
-    toast.textContent = texto;
-    toast.hidden = false;
-
-    timerToast =
-        setTimeout(() => {
-
-            toast.hidden = true;
-
-        }, 2300);
+    padding: 28px 18px 46px;
 }
 
 
-// ==================================================
-// HISTÓRICO
-// ==================================================
+/* ==================================================
+   TOPO
+   ================================================== */
 
-function registrarEvento(
-    tipo,
-    nome,
-    ean = null,
-    quantidade = 1
-) {
+.topo {
+    display: flex;
 
-    historico.push({
+    align-items: center;
+    justify-content: space-between;
 
-        id: Date.now(),
-
-        tipo: tipo,
-
-        nome: nome,
-
-        ean: ean,
-
-        quantidade: quantidade,
-
-        data: new Date().toISOString()
-    });
-
-
-    salvarHistorico();
-
-    atualizarHistorico();
-    atualizarResumo();
-    atualizarPrevisoes();
-    atualizarProdutos();
+    margin-bottom: 26px;
 }
 
 
-function formatarData(dataISO) {
+.topo h1 {
+    margin: 0;
 
-    const data =
-        new Date(dataISO);
-
-
-    return data.toLocaleString(
-        "pt-BR",
-        {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit"
-        }
-    );
+    font-size: 29px;
+    letter-spacing: -1px;
 }
 
 
-function formatarDataCurta(dataISO) {
+.topo p {
+    margin: 4px 0 0;
 
-    if (!dataISO) {
-        return "Sem movimentação";
-    }
-
-
-    const data =
-        new Date(dataISO);
-
-
-    return data.toLocaleDateString(
-        "pt-BR",
-        {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric"
-        }
-    );
+    color: var(--secundario);
+    font-size: 14px;
 }
 
 
-function atualizarHistorico() {
+.contador {
+    width: 66px;
+    height: 62px;
 
-    const historicoBox =
-        el("historicoBox");
+    border-radius: 19px;
 
+    background: var(--escuro);
+    color: white;
 
-    if (!historicoBox) {
-        return;
-    }
+    display: flex;
+    flex-direction: column;
 
-
-    historicoBox.innerHTML = "";
-
-
-    if (historico.length === 0) {
-
-        historicoBox.innerHTML = `
-            <div class="estado-vazio">
-                Nenhum evento registrado
-            </div>
-        `;
-
-        return;
-    }
-
-
-    const eventos =
-        [...historico].reverse();
-
-
-    eventos.forEach(evento => {
-
-        const linha =
-            document.createElement("div");
-
-
-        linha.className =
-            "evento-historico";
-
-
-        const classeTipo =
-            evento.tipo === "acabou"
-                ? "acabou"
-                : "comprado";
-
-
-        const textoTipo =
-            evento.tipo === "acabou"
-                ? "ACABOU"
-                : "COMPRADO";
-
-
-        linha.innerHTML = `
-
-            <div class="evento-principal">
-
-                <span
-                    class="evento-tipo ${classeTipo}"
-                >
-                    ${textoTipo}
-                </span>
-
-                <strong>
-                    ${evento.nome}
-                </strong>
-
-                ${
-                    evento.quantidade > 1
-                        ? `
-                            <span class="evento-quantidade">
-                                x${evento.quantidade}
-                            </span>
-                          `
-                        : ""
-                }
-
-            </div>
-
-            <div class="evento-data">
-                ${formatarData(evento.data)}
-            </div>
-        `;
-
-
-        historicoBox.appendChild(
-            linha
-        );
-    });
+    justify-content: center;
+    align-items: center;
 }
 
 
-// ==================================================
-// IDENTIFICAÇÃO
-// ==================================================
-
-function mesmoProduto(produto, evento) {
-
-    if (
-        produto.ean &&
-        evento.ean
-    ) {
-
-        return (
-            String(produto.ean) ===
-            String(evento.ean)
-        );
-    }
-
-
-    return (
-        String(produto.nome || "")
-            .toLowerCase() ===
-        String(evento.nome || "")
-            .toLowerCase()
-    );
+.contador strong {
+    font-size: 21px;
 }
 
 
-function eventosDoProduto(produto) {
+.contador span {
+    margin-top: 1px;
 
-    return historico
-        .filter(
-            evento =>
-                mesmoProduto(
-                    produto,
-                    evento
-                )
-        )
-        .sort(
-            (a, b) =>
-                new Date(a.data) -
-                new Date(b.data)
-        );
+    font-size: 10px;
+
+    opacity: .65;
 }
 
 
-// ==================================================
-// CÁLCULOS
-// ==================================================
+/* ==================================================
+   CARDS
+   ================================================== */
 
-function diferencaDias(
-    dataInicial,
-    dataFinal
-) {
+.card {
+    padding: 20px;
 
-    const inicio =
-        new Date(dataInicial);
+    background: var(--card);
 
-    const fim =
-        new Date(dataFinal);
+    border-radius: 22px;
 
-
-    return (
-        fim - inicio
-    ) /
-    (
-        1000 *
-        60 *
-        60 *
-        24
-    );
+    box-shadow:
+        0 7px 25px
+        rgba(0, 0, 0, .045);
 }
 
 
-function media(valores) {
+.card-cabecalho {
+    display: flex;
 
-    if (valores.length === 0) {
-        return null;
-    }
+    justify-content: space-between;
+    align-items: center;
 
+    gap: 10px;
 
-    return (
-        valores.reduce(
-            (total, valor) =>
-                total + valor,
-            0
-        ) /
-        valores.length
-    );
+    margin-bottom: 8px;
 }
 
 
-function calcularResumoProduto(produto) {
+.card h2 {
+    margin: 0;
 
-    const eventos =
-        eventosDoProduto(produto);
-
-
-    const duracoes = [];
-    const reposicoes = [];
-
-
-    for (
-        let i = 0;
-        i < eventos.length - 1;
-        i++
-    ) {
-
-        const atual =
-            eventos[i];
-
-        const proximo =
-            eventos[i + 1];
-
-
-        if (
-            atual.tipo === "comprado" &&
-            proximo.tipo === "acabou"
-        ) {
-
-            duracoes.push(
-                diferencaDias(
-                    atual.data,
-                    proximo.data
-                )
-            );
-        }
-
-
-        if (
-            atual.tipo === "acabou" &&
-            proximo.tipo === "comprado"
-        ) {
-
-            reposicoes.push(
-                diferencaDias(
-                    atual.data,
-                    proximo.data
-                )
-            );
-        }
-    }
-
-
-    const ultimoEvento =
-        eventos.length
-            ? eventos[eventos.length - 1]
-            : null;
-
-
-    return {
-
-        duracaoMedia:
-            media(duracoes),
-
-        reposicaoMedia:
-            media(reposicoes),
-
-        ciclosDuracao:
-            duracoes.length,
-
-        ciclosReposicao:
-            reposicoes.length,
-
-        ultimoEvento:
-            ultimoEvento,
-
-        totalEventos:
-            eventos.length
-    };
+    font-size: 18px;
 }
 
 
-function formatarDuracao(dias) {
+.subtitulo-card {
+    margin: 4px 0 0;
 
-    if (
-        dias === null ||
-        dias === undefined
-    ) {
+    color: var(--secundario);
 
-        return "Sem dados suficientes";
-    }
-
-
-    if (dias < 1) {
-
-        const horas =
-            dias * 24;
-
-
-        if (horas < 1) {
-
-            const minutos =
-                Math.max(
-                    1,
-                    Math.round(
-                        horas * 60
-                    )
-                );
-
-
-            return `${minutos} min`;
-        }
-
-
-        return `${horas.toFixed(1)} h`;
-    }
-
-
-    return `${dias.toFixed(1)} dias`;
+    font-size: 11px;
 }
 
 
-// ==================================================
-// PRODUTOS CONHECIDOS
-// ==================================================
+.limpar {
+    padding: 6px;
 
-function obterProdutosConhecidos() {
+    border: 0;
 
-    const resultado =
-        produtos.map(
-            produto => ({
-                nome:
-                    produto.nome,
+    background: transparent;
 
-                ean:
-                    produto.ean || null
-            })
-        );
+    color: #999;
 
-
-    historico.forEach(evento => {
-
-        const existe =
-            resultado.find(
-                produto =>
-                    mesmoProduto(
-                        produto,
-                        evento
-                    )
-            );
-
-
-        if (!existe) {
-
-            resultado.push({
-
-                nome:
-                    evento.nome,
-
-                ean:
-                    evento.ean || null
-            });
-        }
-    });
-
-
-    return resultado;
+    font-size: 12px;
 }
 
 
-// ==================================================
-// PREVISÕES
-// ==================================================
+.estado-vazio {
+    padding: 32px 0;
 
-function calcularPrevisao(produto) {
+    text-align: center;
 
-    const resumo =
-        calcularResumoProduto(produto);
+    color: #aaa;
 
-
-    if (
-        resumo.duracaoMedia === null ||
-        !resumo.ultimoEvento
-    ) {
-
-        return null;
-    }
-
-
-    if (
-        resumo.ultimoEvento.tipo !==
-        "comprado"
-    ) {
-
-        return {
-
-            produto: produto,
-
-            situacao: "acabou",
-
-            diasRestantes: 0,
-
-            dataPrevista: null,
-
-            duracaoMedia:
-                resumo.duracaoMedia
-        };
-    }
-
-
-    const dataCompra =
-        new Date(
-            resumo.ultimoEvento.data
-        );
-
-
-    const milissegundosDuracao =
-        resumo.duracaoMedia *
-        24 *
-        60 *
-        60 *
-        1000;
-
-
-    const dataPrevista =
-        new Date(
-            dataCompra.getTime() +
-            milissegundosDuracao
-        );
-
-
-    const agora =
-        new Date();
-
-
-    const diasRestantes =
-        (
-            dataPrevista -
-            agora
-        ) /
-        (
-            1000 *
-            60 *
-            60 *
-            24
-        );
-
-
-    let situacao =
-        "normal";
-
-
-    const limiteAtencao =
-        Math.max(
-            1,
-            resumo.duracaoMedia *
-            0.20
-        );
-
-
-    if (
-        diasRestantes <= 0
-    ) {
-
-        situacao =
-            "provavel";
-
-    } else if (
-        diasRestantes <=
-        limiteAtencao
-    ) {
-
-        situacao =
-            "atencao";
-    }
-
-
-    return {
-
-        produto:
-            produto,
-
-        situacao:
-            situacao,
-
-        diasRestantes:
-            diasRestantes,
-
-        dataPrevista:
-            dataPrevista,
-
-        duracaoMedia:
-            resumo.duracaoMedia
-    };
+    font-size: 14px;
 }
 
 
-function textoPrevisao(previsao) {
+/* ==================================================
+   LISTA
+   ================================================== */
 
-    if (
-        previsao.situacao ===
-        "acabou"
-    ) {
+.item {
+    min-height: 64px;
 
-        return "Já está na lista de compras";
-    }
+    display: flex;
 
+    justify-content: space-between;
+    align-items: center;
 
-    const dias =
-        previsao.diasRestantes;
+    gap: 10px;
 
-
-    if (dias <= 0) {
-
-        const atraso =
-            Math.abs(dias);
-
-
-        if (atraso < 1) {
-
-            return "Pode estar acabando hoje";
-        }
-
-
-        return (
-            `Previsão vencida há ` +
-            `${Math.round(atraso)} dia(s)`
-        );
-    }
-
-
-    if (dias < 1) {
-
-        return "Pode acabar hoje";
-    }
-
-
-    if (dias < 2) {
-
-        return "Pode acabar amanhã";
-    }
-
-
-    return (
-        `Estimativa: ${Math.ceil(dias)} dias`
-    );
+    border-bottom:
+        1px solid
+        var(--borda);
 }
 
 
-function tituloSituacao(situacao) {
-
-    if (situacao === "acabou") {
-        return "NA LISTA";
-    }
-
-    if (situacao === "provavel") {
-        return "PROVÁVEL";
-    }
-
-    if (situacao === "atencao") {
-        return "ATENÇÃO";
-    }
-
-    return "NORMAL";
+.item:last-child {
+    border-bottom: none;
 }
 
 
-// ==================================================
-// ADICIONAR PREVISÃO À LISTA
-// ==================================================
+.item-dados {
+    display: flex;
 
-function adicionarPrevisaoALista(produto) {
+    align-items: center;
 
-    if (!produto) {
-        return;
-    }
-
-
-    const existente =
-        itens.find(item => {
-
-            if (
-                produto.ean &&
-                item.ean
-            ) {
-
-                return (
-                    String(produto.ean) ===
-                    String(item.ean)
-                );
-            }
-
-
-            return (
-                String(item.nome)
-                    .toLowerCase() ===
-                String(produto.nome)
-                    .toLowerCase()
-            );
-        });
-
-
-    if (existente) {
-
-        existente.quantidade++;
-
-        salvarLista();
-
-        atualizarLista();
-        atualizarPrevisoes();
-
-        mostrarMensagem(
-            `${produto.nome} já estava na lista. Quantidade aumentada.`
-        );
-
-        return;
-    }
-
-
-    itens.push({
-
-        nome:
-            produto.nome,
-
-        quantidade:
-            1,
-
-        ean:
-            produto.ean || null
-    });
-
-
-    salvarLista();
-
-
-    registrarEvento(
-        "acabou",
-        produto.nome,
-        produto.ean || null,
-        1
-    );
-
-
-    atualizarLista();
-    atualizarPrevisoes();
-
-
-    mostrarMensagem(
-        `${produto.nome} adicionado à lista`
-    );
+    gap: 8px;
 }
 
 
-function atualizarPrevisoes() {
+.item-nome {
+    font-size: 16px;
 
-    const previsoesBox =
-        el("previsoesBox");
-
-
-    if (!previsoesBox) {
-        return;
-    }
-
-
-    previsoesBox.innerHTML = "";
-
-
-    const produtosConhecidos =
-        obterProdutosConhecidos();
-
-
-    const previsoes =
-        produtosConhecidos
-            .map(
-                produto =>
-                    calcularPrevisao(
-                        produto
-                    )
-            )
-            .filter(
-                previsao =>
-                    previsao !== null
-            );
-
-
-    if (previsoes.length === 0) {
-
-        previsoesBox.innerHTML = `
-            <div class="estado-previsao-vazio">
-
-                Ainda preciso observar pelo menos um ciclo
-
-                <strong>
-                    comprado → acabou
-                </strong>
-
-                para começar a prever.
-
-            </div>
-        `;
-
-        return;
-    }
-
-
-    previsoes.sort(
-        (a, b) => {
-
-            if (
-                a.situacao === "acabou" &&
-                b.situacao !== "acabou"
-            ) {
-                return -1;
-            }
-
-
-            if (
-                b.situacao === "acabou" &&
-                a.situacao !== "acabou"
-            ) {
-                return 1;
-            }
-
-
-            return (
-                a.diasRestantes -
-                b.diasRestantes
-            );
-        }
-    );
-
-
-    previsoes
-        .slice(0, 5)
-        .forEach(previsao => {
-
-            const linha =
-                document.createElement(
-                    "div"
-                );
-
-
-            linha.className =
-                "previsao-item";
-
-
-            const info =
-                document.createElement(
-                    "div"
-                );
-
-
-            info.className =
-                "previsao-info";
-
-
-            const nome =
-                document.createElement(
-                    "strong"
-                );
-
-
-            nome.textContent =
-                previsao.produto.nome;
-
-
-            const detalhe =
-                document.createElement(
-                    "span"
-                );
-
-
-            detalhe.textContent =
-                textoPrevisao(
-                    previsao
-                );
-
-
-            info.appendChild(
-                nome
-            );
-
-            info.appendChild(
-                detalhe
-            );
-
-
-            const ladoDireito =
-                document.createElement(
-                    "div"
-                );
-
-
-            ladoDireito.className =
-                "previsao-lado";
-
-
-            const status =
-                document.createElement(
-                    "span"
-                );
-
-
-            status.className =
-                `previsao-status ${previsao.situacao}`;
-
-
-            status.textContent =
-                tituloSituacao(
-                    previsao.situacao
-                );
-
-
-            ladoDireito.appendChild(
-                status
-            );
-
-
-            /*
-                Só oferecemos adicionar automaticamente
-                quando realmente há uma previsão acionável.
-            */
-
-            if (
-                previsao.situacao ===
-                "atencao" ||
-
-                previsao.situacao ===
-                "provavel"
-            ) {
-
-                const botaoAdicionar =
-                    document.createElement(
-                        "button"
-                    );
-
-
-                botaoAdicionar.type =
-                    "button";
-
-
-                botaoAdicionar.className =
-                    "botao-previsao";
-
-
-                botaoAdicionar.textContent =
-                    "Adicionar à lista";
-
-
-                botaoAdicionar.addEventListener(
-                    "click",
-                    () => {
-
-                        adicionarPrevisaoALista(
-                            previsao.produto
-                        );
-                    }
-                );
-
-
-                ladoDireito.appendChild(
-                    botaoAdicionar
-                );
-            }
-
-
-            linha.appendChild(
-                info
-            );
-
-
-            linha.appendChild(
-                ladoDireito
-            );
-
-
-            previsoesBox.appendChild(
-                linha
-            );
-        });
+    font-weight: 600;
 }
 
 
-// ==================================================
-// RESUMO
-// ==================================================
+.item-quantidade {
+    color: var(--secundario);
 
-function atualizarResumo() {
-
-    const resumoBox =
-        el("resumoBox");
-
-
-    if (!resumoBox) {
-        return;
-    }
-
-
-    resumoBox.innerHTML = "";
-
-
-    const produtosConhecidos =
-        obterProdutosConhecidos();
-
-
-    if (
-        produtosConhecidos.length === 0
-    ) {
-
-        resumoBox.innerHTML = `
-            <div class="estado-vazio">
-                Ainda não há dados suficientes
-            </div>
-        `;
-
-        return;
-    }
-
-
-    produtosConhecidos.forEach(produto => {
-
-        const resumo =
-            calcularResumoProduto(
-                produto
-            );
-
-
-        const previsao =
-            calcularPrevisao(
-                produto
-            );
-
-
-        const card =
-            document.createElement(
-                "div"
-            );
-
-
-        card.className =
-            "resumo-produto";
-
-
-        let ultimoTexto =
-            "Nenhum evento";
-
-
-        if (resumo.ultimoEvento) {
-
-            ultimoTexto =
-                resumo.ultimoEvento.tipo ===
-                "acabou"
-                    ? "ACABOU"
-                    : "COMPRADO";
-        }
-
-
-        let previsaoHTML = `
-
-            <div class="previsao-resumo">
-                Previsão ainda indisponível
-            </div>
-        `;
-
-
-        if (previsao) {
-
-            previsaoHTML = `
-
-                <div class="previsao-resumo">
-                    ${textoPrevisao(previsao)}
-                </div>
-            `;
-        }
-
-
-        card.innerHTML = `
-
-            <div class="resumo-topo">
-
-                <strong>
-                    ${produto.nome}
-                </strong>
-
-                <span class="ultimo-evento">
-                    ${ultimoTexto}
-                </span>
-
-            </div>
-
-
-            <div class="metricas">
-
-                <div class="metrica">
-
-                    <span>
-                        Duração média
-                    </span>
-
-                    <strong>
-                        ${
-                            formatarDuracao(
-                                resumo.duracaoMedia
-                            )
-                        }
-                    </strong>
-
-                </div>
-
-
-                <div class="metrica">
-
-                    <span>
-                        Reposição média
-                    </span>
-
-                    <strong>
-                        ${
-                            formatarDuracao(
-                                resumo.reposicaoMedia
-                            )
-                        }
-                    </strong>
-
-                </div>
-
-            </div>
-
-
-            ${previsaoHTML}
-
-
-            <div class="resumo-rodape">
-
-                <span>
-                    Ciclos de consumo:
-                    ${resumo.ciclosDuracao}
-                </span>
-
-                <span>
-                    Reposições medidas:
-                    ${resumo.ciclosReposicao}
-                </span>
-
-            </div>
-        `;
-
-
-        resumoBox.appendChild(
-            card
-        );
-    });
+    font-size: 13px;
 }
 
 
-// ==================================================
-// LISTA
-// ==================================================
+.item-acoes {
+    display: flex;
 
-function totalItens() {
-
-    return itens.reduce(
-        (total, item) =>
-            total + item.quantidade,
-        0
-    );
+    gap: 6px;
 }
 
 
-function atualizarLista() {
+.acao {
+    width: 35px;
+    height: 35px;
 
-    const lista =
-        el("lista");
+    padding: 0;
 
-    const contador =
-        el("contador");
+    border: none;
 
+    border-radius: 11px;
 
-    if (!lista) {
-        return;
-    }
+    display: flex;
 
+    justify-content: center;
+    align-items: center;
 
-    lista.innerHTML = "";
-
-
-    if (contador) {
-
-        contador.textContent =
-            totalItens();
-    }
-
-
-    if (itens.length === 0) {
-
-        lista.innerHTML = `
-            <div class="estado-vazio">
-                Nenhum item na lista
-            </div>
-        `;
-
-        return;
-    }
-
-
-    itens.forEach(
-        (item, indice) => {
-
-            const linha =
-                document.createElement(
-                    "div"
-                );
-
-
-            linha.className =
-                "item";
-
-
-            linha.innerHTML = `
-
-                <div class="item-dados">
-
-                    <span class="item-nome">
-                        ${item.nome}
-                    </span>
-
-                    <span class="item-quantidade">
-                        x${item.quantidade}
-                    </span>
-
-                </div>
-
-
-                <div class="item-acoes">
-
-                    <button
-                        class="acao quantidade"
-                        data-acao="menos"
-                        data-indice="${indice}"
-                    >
-                        −
-                    </button>
-
-                    <button
-                        class="acao quantidade"
-                        data-acao="mais"
-                        data-indice="${indice}"
-                    >
-                        +
-                    </button>
-
-                    <button
-                        class="acao concluir"
-                        data-acao="comprado"
-                        data-indice="${indice}"
-                    >
-                        ✓
-                    </button>
-
-                </div>
-            `;
-
-
-            lista.appendChild(
-                linha
-            );
-        }
-    );
+    font-size: 18px;
 }
 
 
-function adicionarItem(
-    nome,
-    ean = null,
-    registrar = true
-) {
+.quantidade {
+    background: #efefec;
 
-    nome =
-        nome.trim();
-
-
-    const existente =
-        itens.find(
-            item =>
-                item.nome
-                    .toLowerCase() ===
-                nome
-                    .toLowerCase()
-        );
-
-
-    if (existente) {
-
-        existente.quantidade++;
-
-
-        if (
-            !existente.ean &&
-            ean
-        ) {
-
-            existente.ean =
-                ean;
-        }
-
-    } else {
-
-        itens.push({
-
-            nome:
-                nome,
-
-            quantidade:
-                1,
-
-            ean:
-                ean
-        });
-    }
-
-
-    salvarLista();
-
-
-    if (registrar) {
-
-        registrarEvento(
-            "acabou",
-            nome,
-            ean,
-            1
-        );
-    }
-
-
-    atualizarLista();
-    atualizarPrevisoes();
+    color: var(--texto);
 }
 
 
-function lidarCliqueLista(event) {
+.concluir {
+    background: var(--verde);
 
-    const botao =
-        event.target.closest(
-            "[data-acao]"
-        );
-
-
-    if (!botao) {
-        return;
-    }
-
-
-    const indice =
-        Number(
-            botao.dataset.indice
-        );
-
-
-    const acao =
-        botao.dataset.acao;
-
-
-    const item =
-        itens[indice];
-
-
-    if (!item) {
-        return;
-    }
-
-
-    if (acao === "mais") {
-
-        item.quantidade++;
-    }
-
-
-    if (acao === "menos") {
-
-        item.quantidade--;
-
-
-        if (
-            item.quantidade <= 0
-        ) {
-
-            itens.splice(
-                indice,
-                1
-            );
-        }
-    }
-
-
-    if (
-        acao === "comprado"
-    ) {
-
-        registrarEvento(
-            "comprado",
-            item.nome,
-            item.ean || null,
-            item.quantidade
-        );
-
-
-        itens.splice(
-            indice,
-            1
-        );
-
-
-        mostrarMensagem(
-            `${item.nome} marcado como comprado`
-        );
-    }
-
-
-    salvarLista();
-
-    atualizarLista();
-    atualizarPrevisoes();
+    color: white;
 }
 
 
-function limparLista() {
+/* ==================================================
+   PREVISÕES
+   ================================================== */
 
-    if (
-        itens.length === 0
-    ) {
-
-        return;
-    }
-
-
-    const confirmar =
-        confirm(
-            "Limpar toda a lista?"
-        );
-
-
-    if (!confirmar) {
-        return;
-    }
-
-
-    itens = [];
-
-
-    salvarLista();
-
-    atualizarLista();
-    atualizarPrevisoes();
+.previsoes-card {
+    margin-top: 14px;
 }
 
 
-// ==================================================
-// PRODUTOS
-// ==================================================
+.estado-previsao-vazio {
+    padding: 21px 5px 7px;
 
-function buscarProdutoPorEAN(ean) {
+    color: #999;
 
-    return produtos.find(
-        produto =>
-            String(produto.ean) ===
-            String(ean)
-    );
+    text-align: center;
+
+    font-size: 12px;
+
+    line-height: 1.55;
 }
 
 
-function obterProdutosFiltrados() {
-
-    const busca =
-        el("buscaProdutos");
-
-
-    const termo =
-        busca
-            ? busca.value
-                .trim()
-                .toLowerCase()
-            : "";
-
-
-    if (!termo) {
-        return [...produtos];
-    }
-
-
-    return produtos.filter(
-        produto => {
-
-            const nome =
-                String(
-                    produto.nome || ""
-                ).toLowerCase();
-
-
-            const ean =
-                String(
-                    produto.ean || ""
-                ).toLowerCase();
-
-
-            return (
-                nome.includes(termo) ||
-                ean.includes(termo)
-            );
-        }
-    );
+.estado-previsao-vazio strong {
+    color: #777;
 }
 
 
-function editarProduto(produto) {
+.previsao-item {
+    min-height: 68px;
 
-    if (!produto) {
-        return;
-    }
+    display: flex;
 
+    align-items: center;
+    justify-content: space-between;
 
-    const nomeAtual =
-        String(
-            produto.nome || ""
-        );
+    gap: 12px;
 
+    padding: 8px 0;
 
-    const novoNome =
-        prompt(
-            "Novo nome do produto:",
-            nomeAtual
-        );
-
-
-    if (
-        !novoNome ||
-        !novoNome.trim()
-    ) {
-
-        return;
-    }
-
-
-    const nomeLimpo =
-        novoNome.trim();
-
-
-    if (
-        nomeLimpo ===
-        nomeAtual
-    ) {
-
-        return;
-    }
-
-
-    produto.nome =
-        nomeLimpo;
-
-
-    itens.forEach(item => {
-
-        if (
-            produto.ean &&
-            item.ean &&
-            String(item.ean) ===
-            String(produto.ean)
-        ) {
-
-            item.nome =
-                nomeLimpo;
-        }
-    });
-
-
-    historico.forEach(evento => {
-
-        if (
-            produto.ean &&
-            evento.ean &&
-            String(evento.ean) ===
-            String(produto.ean)
-        ) {
-
-            evento.nome =
-                nomeLimpo;
-        }
-    });
-
-
-    salvarProdutos();
-    salvarLista();
-    salvarHistorico();
-
-
-    atualizarProdutos();
-    atualizarLista();
-    atualizarHistorico();
-    atualizarResumo();
-    atualizarPrevisoes();
-
-
-    mostrarMensagem(
-        `${nomeAtual} alterado para ${nomeLimpo}`
-    );
+    border-bottom:
+        1px solid
+        var(--borda);
 }
 
 
-function excluirProduto(produto) {
-
-    if (!produto) {
-        return;
-    }
-
-
-    const confirmar =
-        confirm(
-            `Excluir "${produto.nome}" dos produtos cadastrados?\n\nO histórico será mantido.`
-        );
-
-
-    if (!confirmar) {
-        return;
-    }
-
-
-    const indice =
-        produtos.indexOf(
-            produto
-        );
-
-
-    if (indice === -1) {
-        return;
-    }
-
-
-    produtos.splice(
-        indice,
-        1
-    );
-
-
-    salvarProdutos();
-
-
-    atualizarProdutos();
-    atualizarResumo();
-    atualizarPrevisoes();
-
-
-    mostrarMensagem(
-        `${produto.nome} removido do cadastro`
-    );
+.previsao-item:last-child {
+    border-bottom: none;
 }
 
 
-function atualizarProdutos() {
+.previsao-info {
+    min-width: 0;
 
-    const produtosBox =
-        el("produtosBox");
+    display: flex;
+    flex-direction: column;
 
-    const contadorProdutos =
-        el("contadorProdutos");
-
-
-    if (!produtosBox) {
-        return;
-    }
-
-
-    produtosBox.innerHTML = "";
-
-
-    if (contadorProdutos) {
-
-        contadorProdutos.textContent =
-            produtos.length === 1
-                ? "1 produto cadastrado"
-                : `${produtos.length} produtos cadastrados`;
-    }
-
-
-    if (
-        produtos.length === 0
-    ) {
-
-        produtosBox.innerHTML = `
-            <div class="estado-vazio">
-                Nenhum produto cadastrado
-            </div>
-        `;
-
-        return;
-    }
-
-
-    const filtrados =
-        obterProdutosFiltrados();
-
-
-    if (
-        filtrados.length === 0
-    ) {
-
-        produtosBox.innerHTML = `
-            <div class="estado-vazio">
-                Nenhum produto encontrado
-            </div>
-        `;
-
-        return;
-    }
-
-
-    filtrados.forEach(produto => {
-
-        const eventos =
-            eventosDoProduto(
-                produto
-            );
-
-
-        const ultimoEvento =
-            eventos.length
-                ? eventos[
-                    eventos.length - 1
-                  ]
-                : null;
-
-
-        const card =
-            document.createElement(
-                "div"
-            );
-
-
-        card.className =
-            "produto-card";
-
-
-        const info =
-            document.createElement(
-                "div"
-            );
-
-
-        info.className =
-            "produto-info";
-
-
-        const nome =
-            document.createElement(
-                "strong"
-            );
-
-
-        nome.textContent =
-            produto.nome ||
-            "Produto sem nome";
-
-
-        const ean =
-            document.createElement(
-                "div"
-            );
-
-
-        ean.className =
-            "produto-ean";
-
-
-        ean.textContent =
-            produto.ean
-                ? `EAN ${produto.ean}`
-                : "Sem EAN";
-
-
-        const estatisticas =
-            document.createElement(
-                "div"
-            );
-
-
-        estatisticas.className =
-            "produto-estatisticas";
-
-
-        const totalEventos =
-            document.createElement(
-                "span"
-            );
-
-
-        totalEventos.textContent =
-            eventos.length === 1
-                ? "1 evento"
-                : `${eventos.length} eventos`;
-
-
-        const ultimaMovimentacao =
-            document.createElement(
-                "span"
-            );
-
-
-        ultimaMovimentacao.textContent =
-            ultimoEvento
-                ? `Último: ${formatarDataCurta(
-                    ultimoEvento.data
-                  )}`
-                : "Último: sem registro";
-
-
-        estatisticas.appendChild(
-            totalEventos
-        );
-
-
-        estatisticas.appendChild(
-            ultimaMovimentacao
-        );
-
-
-        info.appendChild(
-            nome
-        );
-
-        info.appendChild(
-            ean
-        );
-
-        info.appendChild(
-            estatisticas
-        );
-
-
-        const acoes =
-            document.createElement(
-                "div"
-            );
-
-
-        acoes.className =
-            "produto-acoes";
-
-
-        const botaoEditar =
-            document.createElement(
-                "button"
-            );
-
-
-        botaoEditar.type =
-            "button";
-
-
-        botaoEditar.className =
-            "produto-botao editar";
-
-
-        botaoEditar.textContent =
-            "Editar";
-
-
-        botaoEditar.addEventListener(
-            "click",
-            () => {
-
-                editarProduto(
-                    produto
-                );
-            }
-        );
-
-
-        const botaoExcluir =
-            document.createElement(
-                "button"
-            );
-
-
-        botaoExcluir.type =
-            "button";
-
-
-        botaoExcluir.className =
-            "produto-botao excluir";
-
-
-        botaoExcluir.textContent =
-            "Excluir";
-
-
-        botaoExcluir.addEventListener(
-            "click",
-            () => {
-
-                excluirProduto(
-                    produto
-                );
-            }
-        );
-
-
-        acoes.appendChild(
-            botaoEditar
-        );
-
-
-        acoes.appendChild(
-            botaoExcluir
-        );
-
-
-        card.appendChild(
-            info
-        );
-
-
-        card.appendChild(
-            acoes
-        );
-
-
-        produtosBox.appendChild(
-            card
-        );
-    });
+    gap: 4px;
 }
 
 
-// ==================================================
-// EAN
-// ==================================================
-
-function processarEAN(ean) {
-
-    ean =
-        String(ean)
-            .replace(
-                /\D/g,
-                ""
-            );
-
-
-    if (!ean) {
-
-        mostrarMensagem(
-            "Código inválido"
-        );
-
-        return;
-    }
-
-
-    const produto =
-        buscarProdutoPorEAN(
-            ean
-        );
-
-
-    if (produto) {
-
-        adicionarItem(
-            produto.nome,
-            ean
-        );
-
-
-        mostrarMensagem(
-            `${produto.nome} adicionado`
-        );
-
-
-        return;
-    }
-
-
-    const nome =
-        prompt(
-            `Produto ainda não cadastrado.\n\nEAN: ${ean}\n\nNome do produto:`
-        );
-
-
-    if (
-        !nome ||
-        !nome.trim()
-    ) {
-
-        return;
-    }
-
-
-    const nomeLimpo =
-        nome.trim();
-
-
-    if (
-        buscarProdutoPorEAN(ean)
-    ) {
-
-        mostrarMensagem(
-            "Este EAN já está cadastrado"
-        );
-
-        return;
-    }
-
-
-    produtos.push({
-
-        ean:
-            ean,
-
-        nome:
-            nomeLimpo
-    });
-
-
-    salvarProdutos();
-
-    atualizarProdutos();
-
-
-    adicionarItem(
-        nomeLimpo,
-        ean
-    );
-
-
-    mostrarMensagem(
-        `${nomeLimpo} cadastrado e adicionado`
-    );
+.previsao-info strong {
+    font-size: 14px;
 }
 
 
-function adicionarPorCodigo() {
+.previsao-info span {
+    color: var(--secundario);
 
-    const entrada =
-        prompt(
-            "Digite o código de barras:"
-        );
-
-
-    if (!entrada) {
-        return;
-    }
-
-
-    processarEAN(
-        entrada
-    );
+    font-size: 11px;
 }
 
 
-function adicionarManualmente() {
+.previsao-lado {
+    display: flex;
 
-    const nome =
-        prompt(
-            "Nome do produto:"
-        );
+    flex-direction: column;
 
+    align-items: flex-end;
 
-    if (
-        !nome ||
-        !nome.trim()
-    ) {
+    gap: 7px;
 
-        return;
-    }
-
-
-    adicionarItem(
-        nome.trim(),
-        null
-    );
+    flex-shrink: 0;
 }
 
 
-// ==================================================
-// PAINÉIS
-// ==================================================
+.previsao-status {
+    flex-shrink: 0;
 
-function fecharOutrosPaineis(
-    excecao
-) {
+    padding: 5px 7px;
 
-    const areas = {
+    border-radius: 8px;
 
-        resumo:
-            el("areaResumo"),
+    font-size: 9px;
 
-        historico:
-            el("areaHistorico"),
+    font-weight: 800;
 
-        produtos:
-            el("areaProdutos")
-    };
-
-
-    const botoes = {
-
-        resumo:
-            el("botaoResumo"),
-
-        historico:
-            el("botaoHistorico"),
-
-        produtos:
-            el("botaoProdutos")
-    };
-
-
-    Object.keys(
-        areas
-    ).forEach(nome => {
-
-        if (
-            nome !== excecao &&
-            areas[nome]
-        ) {
-
-            areas[nome].hidden =
-                true;
-        }
-    });
-
-
-    if (
-        excecao !== "resumo" &&
-        botoes.resumo
-    ) {
-
-        botoes.resumo.textContent =
-            "Resumo de consumo";
-    }
-
-
-    if (
-        excecao !== "historico" &&
-        botoes.historico
-    ) {
-
-        botoes.historico.textContent =
-            "Histórico";
-    }
-
-
-    if (
-        excecao !== "produtos" &&
-        botoes.produtos
-    ) {
-
-        botoes.produtos.textContent =
-            "Produtos cadastrados";
-    }
+    letter-spacing: .35px;
 }
 
 
-function alternarResumo() {
+.previsao-status.normal {
+    background: var(--verde-claro);
 
-    const area =
-        el("areaResumo");
-
-    const botao =
-        el("botaoResumo");
-
-
-    if (!area) {
-        return;
-    }
-
-
-    const abrir =
-        area.hidden;
-
-
-    area.hidden =
-        !abrir;
-
-
-    if (botao) {
-
-        botao.textContent =
-            abrir
-                ? "Ocultar resumo"
-                : "Resumo de consumo";
-    }
-
-
-    if (abrir) {
-
-        fecharOutrosPaineis(
-            "resumo"
-        );
-
-        atualizarResumo();
-    }
+    color: var(--verde);
 }
 
 
-function alternarHistorico() {
+.previsao-status.atencao {
+    background: var(--amarelo-claro);
 
-    const area =
-        el("areaHistorico");
-
-    const botao =
-        el("botaoHistorico");
-
-
-    if (!area) {
-        return;
-    }
-
-
-    const abrir =
-        area.hidden;
-
-
-    area.hidden =
-        !abrir;
-
-
-    if (botao) {
-
-        botao.textContent =
-            abrir
-                ? "Ocultar histórico"
-                : "Histórico";
-    }
-
-
-    if (abrir) {
-
-        fecharOutrosPaineis(
-            "historico"
-        );
-
-        atualizarHistorico();
-    }
+    color: var(--amarelo);
 }
 
 
-function alternarProdutos() {
+.previsao-status.provavel,
+.previsao-status.acabou {
+    background: var(--vermelho-claro);
 
-    const area =
-        el("areaProdutos");
-
-    const botao =
-        el("botaoProdutos");
-
-
-    if (!area) {
-        return;
-    }
-
-
-    const abrir =
-        area.hidden;
-
-
-    area.hidden =
-        !abrir;
-
-
-    if (botao) {
-
-        botao.textContent =
-            abrir
-                ? "Ocultar produtos cadastrados"
-                : "Produtos cadastrados";
-    }
-
-
-    if (abrir) {
-
-        fecharOutrosPaineis(
-            "produtos"
-        );
-
-        atualizarProdutos();
-    }
+    color: var(--vermelho);
 }
 
 
-// ==================================================
-// LIMPEZA
-// ==================================================
+.botao-previsao {
+    min-height: 30px;
 
-function limparHistorico() {
+    padding: 6px 9px;
 
-    if (
-        historico.length === 0
-    ) {
+    border: none;
 
-        return;
-    }
+    border-radius: 9px;
 
+    background: var(--escuro);
 
-    const confirmar =
-        confirm(
-            "Apagar todo o histórico?"
-        );
+    color: white;
 
+    font-size: 10px;
 
-    if (!confirmar) {
-        return;
-    }
-
-
-    historico = [];
-
-
-    salvarHistorico();
-
-    atualizarHistorico();
-    atualizarResumo();
-    atualizarPrevisoes();
-    atualizarProdutos();
+    font-weight: 700;
 }
 
 
-// ==================================================
-// SCANNER
-// ==================================================
+/* ==================================================
+   AÇÕES
+   ================================================== */
 
-async function abrirScanner() {
+.acoes {
+    display: grid;
 
-    const scannerModal =
-        el("scannerModal");
+    gap: 10px;
 
-
-    if (
-        typeof Html5Qrcode ===
-        "undefined"
-    ) {
-
-        alert(
-            "O leitor de código de barras não foi carregado."
-        );
-
-        return;
-    }
-
-
-    if (!scannerModal) {
-        return;
-    }
-
-
-    scannerModal.hidden =
-        false;
-
-
-    leituraEmAndamento =
-        false;
-
-
-    scanner =
-        new Html5Qrcode(
-            "reader"
-        );
-
-
-    const configuracao = {
-
-        fps: 10,
-
-        qrbox: {
-
-            width: 280,
-
-            height: 140
-        }
-    };
-
-
-    try {
-
-        scannerAtivo =
-            true;
-
-
-        await scanner.start(
-
-            {
-                facingMode:
-                    "environment"
-            },
-
-            configuracao,
-
-            async decodedText => {
-
-                if (
-                    leituraEmAndamento
-                ) {
-
-                    return;
-                }
-
-
-                leituraEmAndamento =
-                    true;
-
-
-                if (
-                    navigator.vibrate
-                ) {
-
-                    navigator.vibrate(
-                        120
-                    );
-                }
-
-
-                await fecharScanner();
-
-
-                processarEAN(
-                    decodedText
-                );
-            },
-
-            () => {
-                // Frame sem código.
-            }
-        );
-
-    } catch (erro) {
-
-        console.error(
-            "Erro na câmera:",
-            erro
-        );
-
-
-        scannerAtivo =
-            false;
-
-
-        scannerModal.hidden =
-            true;
-
-
-        alert(
-            "Não foi possível abrir a câmera."
-        );
-    }
+    margin-top: 18px;
 }
 
 
-async function fecharScanner() {
+.acoes-menores {
+    display: grid;
 
-    const scannerModal =
-        el("scannerModal");
+    grid-template-columns:
+        1fr 1fr;
 
-
-    if (
-        scanner &&
-        scannerAtivo
-    ) {
-
-        try {
-
-            await scanner.stop();
-
-        } catch (erro) {
-
-            console.log(
-                "Scanner já estava parado."
-            );
-        }
-    }
-
-
-    scannerAtivo =
-        false;
-
-
-    if (scanner) {
-
-        try {
-
-            scanner.clear();
-
-        } catch {
-
-            // Ignora
-        }
-    }
-
-
-    scanner =
-        null;
-
-
-    if (scannerModal) {
-
-        scannerModal.hidden =
-            true;
-    }
+    gap: 10px;
 }
 
 
-// ==================================================
-// EVENTOS
-// ==================================================
+.botao {
+    width: 100%;
 
-function configurarEventos() {
+    min-height: 52px;
 
-    const lista =
-        el("lista");
+    padding: 12px;
 
+    border: none;
 
-    if (lista) {
+    border-radius: 16px;
 
-        lista.addEventListener(
-            "click",
-            lidarCliqueLista
-        );
-    }
+    background: #e9e9e5;
 
+    color: var(--texto);
 
-    const buscaProdutos =
-        el("buscaProdutos");
+    font-size: 14px;
 
-
-    if (buscaProdutos) {
-
-        buscaProdutos.addEventListener(
-            "input",
-            atualizarProdutos
-        );
-    }
-
-
-    const eventos = [
-
-        [
-            "botaoAdicionar",
-            adicionarManualmente
-        ],
-
-        [
-            "botaoCodigo",
-            adicionarPorCodigo
-        ],
-
-        [
-            "botaoScanner",
-            abrirScanner
-        ],
-
-        [
-            "botaoFecharScanner",
-            fecharScanner
-        ],
-
-        [
-            "botaoResumo",
-            alternarResumo
-        ],
-
-        [
-            "botaoHistorico",
-            alternarHistorico
-        ],
-
-        [
-            "botaoProdutos",
-            alternarProdutos
-        ],
-
-        [
-            "botaoLimpar",
-            limparLista
-        ],
-
-        [
-            "botaoLimparHistorico",
-            limparHistorico
-        ]
-    ];
-
-
-    eventos.forEach(
-        ([id, funcao]) => {
-
-            const elemento =
-                el(id);
-
-
-            if (elemento) {
-
-                elemento.addEventListener(
-                    "click",
-                    funcao
-                );
-            }
-        }
-    );
+    font-weight: 600;
 }
 
 
-// ==================================================
-// GLOBAIS
-// ==================================================
+.botao.destaque {
+    min-height: 64px;
 
-window.alternarResumo =
-    alternarResumo;
+    background: var(--escuro);
 
-window.alternarHistorico =
-    alternarHistorico;
+    color: white;
 
-window.alternarProdutos =
-    alternarProdutos;
+    font-size: 16px;
+}
+
+
+.botao.menu {
+    min-height: 47px;
+
+    background: transparent;
+
+    border:
+        1px solid
+        #d7d6d0;
+
+    color: #666;
+
+    font-weight: 500;
+}
+
+
+.icone {
+    margin-right: 6px;
+
+    font-size: 20px;
+}
+
+
+.painel-extra {
+    margin-top: 14px;
+}
+
+
+/* ==================================================
+   PRODUTOS
+   ================================================== */
+
+.produtos-cabecalho {
+    margin-bottom: 16px;
+}
+
+
+.busca-produtos {
+    margin-top: 15px;
+    margin-bottom: 8px;
+}
+
+
+.busca-produtos input {
+    width: 100%;
+
+    height: 46px;
+
+    padding: 0 14px;
+
+    border:
+        1px solid
+        var(--borda);
+
+    border-radius: 14px;
+
+    background: var(--fundo);
+
+    color: var(--texto);
+
+    font-size: 14px;
+
+    outline: none;
+}
+
+
+.busca-produtos input:focus {
+    border-color: #b8b9b2;
+
+    background: #ffffff;
+}
+
+
+.contador-produtos {
+    margin: 11px 2px 4px;
+
+    color: #aaa;
+
+    font-size: 10px;
+}
+
+
+.produto-card {
+    padding: 16px 0;
+
+    border-bottom:
+        1px solid
+        var(--borda);
+}
+
+
+.produto-card:last-child {
+    border-bottom: none;
+}
+
+
+.produto-info {
+    min-width: 0;
+}
+
+
+.produto-info strong {
+    font-size: 15px;
+}
+
+
+.produto-ean {
+    margin-top: 4px;
+
+    color: #999;
+
+    font-size: 11px;
+}
+
+
+.produto-estatisticas {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+    margin-top: 8px;
+
+    color: #aaa;
+
+    font-size: 10px;
+}
+
+
+.produto-acoes {
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 8px;
+
+    margin-top: 12px;
+}
+
+
+.produto-botao {
+    min-height: 36px;
+
+    border: none;
+
+    border-radius: 11px;
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+
+.produto-botao.editar {
+    background: #efefec;
+
+    color: #555;
+}
+
+
+.produto-botao.excluir {
+    background: var(--vermelho-claro);
+
+    color: var(--vermelho);
+}
+
+
+/* ==================================================
+   HISTÓRICO
+   ================================================== */
+
+.evento-historico {
+    padding: 14px 0;
+
+    border-bottom:
+        1px solid
+        var(--borda);
+}
+
+
+.evento-historico:last-child {
+    border-bottom: none;
+}
+
+
+.evento-principal {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+}
+
+
+.evento-principal strong {
+    font-size: 15px;
+}
+
+
+.evento-tipo {
+    padding: 4px 7px;
+
+    border-radius: 7px;
+
+    font-size: 9px;
+
+    font-weight: 800;
+
+    letter-spacing: .4px;
+}
+
+
+.evento-tipo.acabou {
+    background: var(--vermelho-claro);
+
+    color: var(--vermelho);
+}
+
+
+.evento-tipo.comprado {
+    background: var(--verde-claro);
+
+    color: var(--verde);
+}
+
+
+.evento-quantidade {
+    color: #999;
+
+    font-size: 12px;
+}
+
+
+.evento-data {
+    margin-top: 6px;
+
+    color: #aaa;
+
+    font-size: 11px;
+}
+
+
+/* ==================================================
+   RESUMO
+   ================================================== */
+
+.resumo-produto {
+    padding: 16px 0;
+
+    border-bottom:
+        1px solid
+        var(--borda);
+}
+
+
+.resumo-produto:last-child {
+    border-bottom: none;
+}
+
+
+.resumo-topo {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    gap: 10px;
+
+    margin-bottom: 13px;
+}
+
+
+.resumo-topo strong {
+    font-size: 16px;
+}
+
+
+.ultimo-evento {
+    padding: 4px 7px;
+
+    border-radius: 7px;
+
+    background: #efefec;
+
+    color: #777;
+
+    font-size: 9px;
+
+    font-weight: 800;
+
+    letter-spacing: .3px;
+}
+
+
+.metricas {
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 10px;
+}
+
+
+.metrica {
+    padding: 12px;
+
+    background: var(--fundo);
+
+    border-radius: 14px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+}
+
+
+.metrica span {
+    color: #888;
+
+    font-size: 11px;
+}
+
+
+.metrica strong {
+    font-size: 14px;
+}
+
+
+.previsao-resumo {
+    margin-top: 10px;
+
+    padding: 10px 12px;
+
+    border-radius: 12px;
+
+    background: var(--verde-claro);
+
+    color: var(--verde);
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+
+.resumo-rodape {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 12px;
+
+    margin-top: 11px;
+
+    color: #999;
+
+    font-size: 10px;
+}
+
+
+/* ==================================================
+   SCANNER
+   ================================================== */
+
+.scanner-modal {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 999;
+
+    padding: 18px;
+
+    background:
+        rgba(12, 13, 12, .95);
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+}
+
+
+.scanner-modal[hidden] {
+    display: none;
+}
+
+
+.scanner-conteudo {
+    width: 100%;
+    max-width: 480px;
+
+    padding: 20px;
+
+    background: white;
+
+    border-radius: 24px;
+}
+
+
+.scanner-conteudo h2 {
+    margin: 0;
+
+    text-align: center;
+}
+
+
+.scanner-conteudo p {
+    margin: 6px 0 18px;
+
+    color: #888;
+
+    text-align: center;
+
+    font-size: 13px;
+}
+
+
+#reader {
+    width: 100%;
+
+    overflow: hidden;
+
+    border-radius: 16px;
+}
+
+
+.cancelar {
+    margin-top: 16px;
+}
+
+
+/* ==================================================
+   TOAST
+   ================================================== */
+
+.toast {
+    position: fixed;
+
+    left: 50%;
+    bottom: 30px;
+
+    z-index: 2000;
+
+    transform:
+        translateX(-50%);
+
+    width:
+        calc(100% - 40px);
+
+    max-width: 430px;
+
+    padding: 14px 18px;
+
+    background: var(--escuro);
+
+    color: white;
+
+    border-radius: 15px;
+
+    text-align: center;
+
+    font-size: 14px;
+
+    box-shadow:
+        0 10px 30px
+        rgba(0, 0, 0, .2);
+}
+
+
+.toast[hidden] {
+    display: none;
+}
+
+
+/* ==================================================
+   RODAPÉ
+   ================================================== */
+
+footer {
+    margin-top: 25px;
+
+    text-align: center;
+
+    color: #aaa;
+
+    font-size: 11px;
+}
