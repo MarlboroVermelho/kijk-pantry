@@ -559,6 +559,109 @@ function obterProdutosConhecidos() {
     return resultado;
 }
 
+// ==================================================
+// V1.5 - PAINEL RÁPIDO
+// ==================================================
+
+function totalCiclosObservados() {
+
+    const produtosConhecidos =
+        obterProdutosConhecidos();
+
+
+    return produtosConhecidos.reduce(
+        (total, produto) => {
+
+            const resumo =
+                calcularResumoProduto(
+                    produto
+                );
+
+
+            return (
+                total +
+                resumo.ciclosDuracao
+            );
+        },
+        0
+    );
+}
+
+
+function atualizarPainelRapido() {
+
+    const statusComprar =
+        el("statusComprar");
+
+    const statusProdutos =
+        el("statusProdutos");
+
+    const statusCiclos =
+        el("statusCiclos");
+
+
+    if (statusComprar) {
+
+        statusComprar.textContent =
+            totalItens();
+    }
+
+
+    if (statusProdutos) {
+
+        statusProdutos.textContent =
+            obterProdutosConhecidos()
+                .length;
+    }
+
+
+    if (statusCiclos) {
+
+        statusCiclos.textContent =
+            totalCiclosObservados();
+    }
+}
+
+
+// ==================================================
+// V1.5 - CONFIANÇA DA PREVISÃO
+// ==================================================
+
+function calcularConfianca(produto) {
+
+    const resumo =
+        calcularResumoProduto(
+            produto
+        );
+
+
+    const ciclos =
+        resumo.ciclosDuracao;
+
+
+    if (ciclos <= 1) {
+
+        return {
+            classe: "baixa",
+            texto: "Poucos dados"
+        };
+    }
+
+
+    if (ciclos <= 3) {
+
+        return {
+            classe: "media",
+            texto: "Confiança média"
+        };
+    }
+
+
+    return {
+        classe: "alta",
+        texto: "Boa confiança"
+    };
+}
 
 // ==================================================
 // PREVISÕES
@@ -875,7 +978,9 @@ function atualizarPrevisoes() {
             );
 
 
-    if (previsoes.length === 0) {
+    if (
+        previsoes.length === 0
+    ) {
 
         previsoesBox.innerHTML = `
             <div class="estado-previsao-vazio">
@@ -891,30 +996,52 @@ function atualizarPrevisoes() {
             </div>
         `;
 
+        atualizarPainelRapido();
+
         return;
     }
+
+
+    /*
+        Ordem:
+
+        1. Já está na lista
+        2. Provavelmente acabando
+        3. Atenção
+        4. Normal
+    */
+
+    const prioridade = {
+
+        acabou: 0,
+
+        provavel: 1,
+
+        atencao: 2,
+
+        normal: 3
+    };
 
 
     previsoes.sort(
         (a, b) => {
 
-            if (
-                a.situacao === "acabou" &&
-                b.situacao !== "acabou"
-            ) {
-                return -1;
-            }
+            const diferencaPrioridade =
+
+                prioridade[a.situacao] -
+                prioridade[b.situacao];
 
 
             if (
-                b.situacao === "acabou" &&
-                a.situacao !== "acabou"
+                diferencaPrioridade !== 0
             ) {
-                return 1;
+
+                return diferencaPrioridade;
             }
 
 
             return (
+
                 a.diasRestantes -
                 b.diasRestantes
             );
@@ -922,9 +1049,23 @@ function atualizarPrevisoes() {
     );
 
 
-    previsoes
-        .slice(0, 5)
-        .forEach(previsao => {
+    const principais =
+        previsoes.slice(
+            0,
+            5
+        );
+
+
+    let quantidadeAcionavel =
+        0;
+
+
+    const produtosAcionaveis =
+        [];
+
+
+    principais.forEach(
+        previsao => {
 
             const linha =
                 document.createElement(
@@ -968,12 +1109,38 @@ function atualizarPrevisoes() {
                 );
 
 
+            const confianca =
+                calcularConfianca(
+                    previsao.produto
+                );
+
+
+            const textoConfianca =
+                document.createElement(
+                    "div"
+                );
+
+
+            textoConfianca.className =
+                `previsao-confianca ${confianca.classe}`;
+
+
+            textoConfianca.textContent =
+                confianca.texto;
+
+
             info.appendChild(
                 nome
             );
 
+
             info.appendChild(
                 detalhe
+            );
+
+
+            info.appendChild(
+                textoConfianca
             );
 
 
@@ -1008,18 +1175,21 @@ function atualizarPrevisoes() {
             );
 
 
-            /*
-                Só oferecemos adicionar automaticamente
-                quando realmente há uma previsão acionável.
-            */
-
             if (
                 previsao.situacao ===
-                "atencao" ||
+                    "atencao" ||
 
                 previsao.situacao ===
-                "provavel"
+                    "provavel"
             ) {
+
+                quantidadeAcionavel++;
+
+
+                produtosAcionaveis.push(
+                    previsao.produto
+                );
+
 
                 const botaoAdicionar =
                     document.createElement(
@@ -1069,7 +1239,124 @@ function atualizarPrevisoes() {
             previsoesBox.appendChild(
                 linha
             );
-        });
+        }
+    );
+
+
+    // ==========================================
+    // ADICIONAR TODOS
+    // ==========================================
+
+    if (
+        quantidadeAcionavel > 1
+    ) {
+
+        const botaoTodos =
+            document.createElement(
+                "button"
+            );
+
+
+        botaoTodos.type =
+            "button";
+
+
+        botaoTodos.className =
+            "adicionar-todos";
+
+
+        botaoTodos.textContent =
+            `Adicionar ${quantidadeAcionavel} itens à lista`;
+
+
+        botaoTodos.addEventListener(
+            "click",
+            () => {
+
+                produtosAcionaveis.forEach(
+                    produto => {
+
+                        /*
+                            Evita aumentar quantidade
+                            caso já esteja na lista.
+                        */
+
+                        const jaExiste =
+                            itens.some(item => {
+
+                                if (
+                                    produto.ean &&
+                                    item.ean
+                                ) {
+
+                                    return (
+                                        String(
+                                            produto.ean
+                                        ) ===
+                                        String(
+                                            item.ean
+                                        )
+                                    );
+                                }
+
+
+                                return (
+                                    String(
+                                        produto.nome
+                                    ).toLowerCase() ===
+                                    String(
+                                        item.nome
+                                    ).toLowerCase()
+                                );
+                            });
+
+
+                        if (!jaExiste) {
+
+                            itens.push({
+
+                                nome:
+                                    produto.nome,
+
+                                quantidade:
+                                    1,
+
+                                ean:
+                                    produto.ean || null
+                            });
+
+
+                            registrarEvento(
+                                "acabou",
+                                produto.nome,
+                                produto.ean || null,
+                                1
+                            );
+                        }
+                    }
+                );
+
+
+                salvarLista();
+
+                atualizarLista();
+                atualizarPrevisoes();
+
+
+                mostrarMensagem(
+                    "Itens previstos adicionados à lista"
+                );
+            }
+        );
+
+
+        previsoesBox.appendChild(
+            botaoTodos
+        );
+    }
+
+
+    atualizarPainelRapido();
 }
 
 
