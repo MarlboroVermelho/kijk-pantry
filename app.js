@@ -1,4 +1,4 @@
-const VERSAO = "1.3.1";
+const VERSAO = "1.4";
 
 const CHAVE_LISTA = "kijkPantryLista";
 const CHAVE_PRODUTOS = "kijkPantryProdutos";
@@ -757,6 +757,92 @@ function tituloSituacao(situacao) {
 }
 
 
+// ==================================================
+// ADICIONAR PREVISÃO À LISTA
+// ==================================================
+
+function adicionarPrevisaoALista(produto) {
+
+    if (!produto) {
+        return;
+    }
+
+
+    const existente =
+        itens.find(item => {
+
+            if (
+                produto.ean &&
+                item.ean
+            ) {
+
+                return (
+                    String(produto.ean) ===
+                    String(item.ean)
+                );
+            }
+
+
+            return (
+                String(item.nome)
+                    .toLowerCase() ===
+                String(produto.nome)
+                    .toLowerCase()
+            );
+        });
+
+
+    if (existente) {
+
+        existente.quantidade++;
+
+        salvarLista();
+
+        atualizarLista();
+        atualizarPrevisoes();
+
+        mostrarMensagem(
+            `${produto.nome} já estava na lista. Quantidade aumentada.`
+        );
+
+        return;
+    }
+
+
+    itens.push({
+
+        nome:
+            produto.nome,
+
+        quantidade:
+            1,
+
+        ean:
+            produto.ean || null
+    });
+
+
+    salvarLista();
+
+
+    registrarEvento(
+        "acabou",
+        produto.nome,
+        produto.ean || null,
+        1
+    );
+
+
+    atualizarLista();
+    atualizarPrevisoes();
+
+
+    mostrarMensagem(
+        `${produto.nome} adicionado à lista`
+    );
+}
+
+
 function atualizarPrevisoes() {
 
     const previsoesBox =
@@ -850,33 +936,134 @@ function atualizarPrevisoes() {
                 "previsao-item";
 
 
-            linha.innerHTML = `
+            const info =
+                document.createElement(
+                    "div"
+                );
 
-                <div class="previsao-info">
 
-                    <strong>
-                        ${previsao.produto.nome}
-                    </strong>
+            info.className =
+                "previsao-info";
 
-                    <span>
-                        ${textoPrevisao(previsao)}
-                    </span>
 
-                </div>
+            const nome =
+                document.createElement(
+                    "strong"
+                );
 
-                <span
-                    class="
-                        previsao-status
-                        ${previsao.situacao}
-                    "
-                >
-                    ${
-                        tituloSituacao(
-                            previsao.situacao
-                        )
+
+            nome.textContent =
+                previsao.produto.nome;
+
+
+            const detalhe =
+                document.createElement(
+                    "span"
+                );
+
+
+            detalhe.textContent =
+                textoPrevisao(
+                    previsao
+                );
+
+
+            info.appendChild(
+                nome
+            );
+
+            info.appendChild(
+                detalhe
+            );
+
+
+            const ladoDireito =
+                document.createElement(
+                    "div"
+                );
+
+
+            ladoDireito.className =
+                "previsao-lado";
+
+
+            const status =
+                document.createElement(
+                    "span"
+                );
+
+
+            status.className =
+                `previsao-status ${previsao.situacao}`;
+
+
+            status.textContent =
+                tituloSituacao(
+                    previsao.situacao
+                );
+
+
+            ladoDireito.appendChild(
+                status
+            );
+
+
+            /*
+                Só oferecemos adicionar automaticamente
+                quando realmente há uma previsão acionável.
+            */
+
+            if (
+                previsao.situacao ===
+                "atencao" ||
+
+                previsao.situacao ===
+                "provavel"
+            ) {
+
+                const botaoAdicionar =
+                    document.createElement(
+                        "button"
+                    );
+
+
+                botaoAdicionar.type =
+                    "button";
+
+
+                botaoAdicionar.className =
+                    "botao-previsao";
+
+
+                botaoAdicionar.textContent =
+                    "Adicionar à lista";
+
+
+                botaoAdicionar.addEventListener(
+                    "click",
+                    () => {
+
+                        adicionarPrevisaoALista(
+                            previsao.produto
+                        );
                     }
-                </span>
-            `;
+                );
+
+
+                ladoDireito.appendChild(
+                    botaoAdicionar
+                );
+            }
+
+
+            linha.appendChild(
+                info
+            );
+
+
+            linha.appendChild(
+                ladoDireito
+            );
 
 
             previsoesBox.appendChild(
@@ -1417,10 +1604,6 @@ function obterProdutosFiltrados() {
 }
 
 
-// ==================================================
-// EDITAR PRODUTO
-// ==================================================
-
 function editarProduto(produto) {
 
     if (!produto) {
@@ -1467,11 +1650,6 @@ function editarProduto(produto) {
         nomeLimpo;
 
 
-    /*
-        Atualiza também a lista atual,
-        caso o mesmo EAN esteja nela.
-    */
-
     itens.forEach(item => {
 
         if (
@@ -1486,14 +1664,6 @@ function editarProduto(produto) {
         }
     });
 
-
-    /*
-        Também corrigimos o nome nos eventos antigos
-        que têm o MESMO EAN.
-
-        Isso mantém o histórico legível sem perder
-        datas nem ciclos.
-    */
 
     historico.forEach(evento => {
 
@@ -1527,10 +1697,6 @@ function editarProduto(produto) {
     );
 }
 
-
-// ==================================================
-// EXCLUIR PRODUTO
-// ==================================================
 
 function excluirProduto(produto) {
 
@@ -1580,10 +1746,6 @@ function excluirProduto(produto) {
     );
 }
 
-
-// ==================================================
-// TELA DE PRODUTOS
-// ==================================================
 
 function atualizarProdutos() {
 
@@ -1668,10 +1830,6 @@ function atualizarProdutos() {
         card.className =
             "produto-card";
 
-
-        // -------------------------------
-        // INFORMAÇÕES
-        // -------------------------------
 
         const info =
             document.createElement(
@@ -1769,10 +1927,6 @@ function atualizarProdutos() {
         );
 
 
-        // -------------------------------
-        // BOTÕES
-        // -------------------------------
-
         const acoes =
             document.createElement(
                 "div"
@@ -1800,11 +1954,6 @@ function atualizarProdutos() {
         botaoEditar.textContent =
             "Editar";
 
-
-        /*
-            Aqui está a principal correção:
-            o botão recebe diretamente o produto.
-        */
 
         botaoEditar.addEventListener(
             "click",
