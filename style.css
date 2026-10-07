@@ -1165,3 +1165,11 @@ footer {
 .previsao-resumo {
     line-height: 1.45;
 }
+/* ==================================================
+   V2.2 - INTEGRIDADE
+   ================================================== */
+
+.evento-tipo.previsto {
+    background: var(--amarelo-claro);
+    color: var(--amarelo);
+}

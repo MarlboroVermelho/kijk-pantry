@@ -1,4 +1,4 @@
-const VERSAO = "2.1";
+const VERSAO = "2.2";
 
 const CHAVE_LISTA = "kijkPantryLista";
 const CHAVE_PRODUTOS = "kijkPantryProdutos";
@@ -136,6 +136,17 @@ function mostrarMensagem(texto) {
 // HISTÓRICO
 // ==================================================
 
+function gerarIdEvento() {
+
+    return (
+        `${Date.now()}-` +
+        Math.random()
+            .toString(16)
+            .slice(2)
+    );
+}
+
+
 function registrarEvento(
     tipo,
     nome,
@@ -143,20 +154,31 @@ function registrarEvento(
     quantidade = 1
 ) {
 
-    historico.push({
+    const evento = {
 
-        id: Date.now(),
+        id:
+            gerarIdEvento(),
 
-        tipo: tipo,
+        tipo:
+            tipo,
 
-        nome: nome,
+        nome:
+            nome,
 
-        ean: ean,
+        ean:
+            ean,
 
-        quantidade: quantidade,
+        quantidade:
+            quantidade,
 
-        data: new Date().toISOString()
-    });
+        data:
+            new Date().toISOString()
+    };
+
+
+    historico.push(
+        evento
+    );
 
 
     salvarHistorico();
@@ -165,6 +187,9 @@ function registrarEvento(
     atualizarResumo();
     atualizarPrevisoes();
     atualizarProdutos();
+
+
+    return evento.id;
 }
 
 
@@ -249,16 +274,35 @@ function atualizarHistorico() {
             "evento-historico";
 
 
-        const classeTipo =
-            evento.tipo === "acabou"
-                ? "acabou"
-                : "comprado";
+        let classeTipo =
+            "comprado";
+
+        let textoTipo =
+            "COMPRADO";
 
 
-        const textoTipo =
+        if (
             evento.tipo === "acabou"
-                ? "ACABOU"
-                : "COMPRADO";
+        ) {
+
+            classeTipo =
+                "acabou";
+
+            textoTipo =
+                "ACABOU";
+        }
+
+
+        if (
+            evento.tipo === "previsto"
+        ) {
+
+            classeTipo =
+                "previsto";
+
+            textoTipo =
+                "PREVISTO";
+        }
 
 
         linha.innerHTML = `
@@ -442,7 +486,9 @@ function maximo(valores) {
 function calcularResumoProduto(produto) {
 
     const eventos =
-        eventosDoProduto(produto);
+        eventosDoProduto(
+            produto
+        );
 
 
     const duracoes = [];
@@ -467,11 +513,38 @@ function calcularResumoProduto(produto) {
             proximo.tipo === "acabou"
         ) {
 
-            duracoes.push(
+            const diasLote =
                 diferencaDias(
                     atual.data,
                     proximo.data
-                )
+                );
+
+
+            const quantidade =
+                Math.max(
+                    1,
+                    Number(
+                        atual.quantidade
+                    ) || 1
+                );
+
+
+            /*
+                O aprendizado passa a representar
+                duração média POR UNIDADE.
+
+                Exemplo:
+
+                comprado x3
+                acabou após 12 dias
+
+                duração observada:
+                4 dias por unidade
+            */
+
+            duracoes.push(
+                diasLote /
+                quantidade
             );
         }
 
@@ -493,7 +566,9 @@ function calcularResumoProduto(produto) {
 
     const ultimoEvento =
         eventos.length
-            ? eventos[eventos.length - 1]
+            ? eventos[
+                eventos.length - 1
+              ]
             : null;
 
 
@@ -744,11 +819,6 @@ function calcularPrevisao(produto) {
             produto
         );
 
-    const duracaoReferencia =
-        calcularDuracaoReferencia(
-            resumo
-        );
-
 
     if (
         resumo.duracaoMedia === null ||
@@ -759,6 +829,20 @@ function calcularPrevisao(produto) {
     }
 
 
+    const duracaoReferencia =
+        calcularDuracaoReferencia(
+            resumo
+        );
+
+
+    /*
+        ACABOU e PREVISTO significam
+        que o produto já está na lista.
+
+        PREVISTO, porém, NÃO entra
+        no cálculo do ciclo de consumo.
+    */
+
     if (
         resumo.ultimoEvento.tipo !==
         "comprado"
@@ -766,31 +850,56 @@ function calcularPrevisao(produto) {
 
         return {
 
-            produto: produto,
+            produto:
+                produto,
 
-            situacao: "acabou",
+            situacao:
+                "acabou",
 
-            diasRestantes: 0,
+            diasRestantes:
+                0,
 
-            dataPrevista: null,
+            dataPrevista:
+                null,
 
             duracaoMedia:
                 resumo.duracaoMedia,
 
             duracaoReferencia:
-                duracaoReferencia
+                duracaoReferencia,
+
+            quantidade:
+                1
         };
     }
 
 
+    const quantidadeComprada =
+        Math.max(
+            1,
+            Number(
+                resumo
+                    .ultimoEvento
+                    .quantidade
+            ) || 1
+        );
+
+
+    const duracaoPrevista =
+        duracaoReferencia *
+        quantidadeComprada;
+
+
     const dataCompra =
         new Date(
-            resumo.ultimoEvento.data
+            resumo
+                .ultimoEvento
+                .data
         );
 
 
     const milissegundosDuracao =
-        duracaoReferencia *
+        duracaoPrevista *
         24 *
         60 *
         60 *
@@ -828,7 +937,7 @@ function calcularPrevisao(produto) {
     const limiteAtencao =
         Math.max(
             1,
-            resumo.duracaoMedia *
+            duracaoPrevista *
             0.20
         );
 
@@ -868,7 +977,13 @@ function calcularPrevisao(produto) {
             resumo.duracaoMedia,
 
         duracaoReferencia:
-            duracaoReferencia
+            duracaoReferencia,
+
+        duracaoPrevista:
+            duracaoPrevista,
+
+        quantidade:
+            quantidadeComprada
     };
 }
 
@@ -947,84 +1062,25 @@ function tituloSituacao(situacao) {
 // ADICIONAR PREVISÃO À LISTA
 // ==================================================
 
-function adicionarPrevisaoALista(produto) {
+function adicionarPrevisaoALista(
+    produto
+) {
 
     if (!produto) {
         return;
     }
 
 
-    const existente =
-        itens.find(item => {
-
-            if (
-                produto.ean &&
-                item.ean
-            ) {
-
-                return (
-                    String(produto.ean) ===
-                    String(item.ean)
-                );
-            }
-
-
-            return (
-                String(item.nome)
-                    .toLowerCase() ===
-                String(produto.nome)
-                    .toLowerCase()
-            );
-        });
-
-
-    if (existente) {
-
-        existente.quantidade++;
-
-        salvarLista();
-
-        atualizarLista();
-        atualizarPrevisoes();
-
-        mostrarMensagem(
-            `${produto.nome} já estava na lista. Quantidade aumentada.`
-        );
-
-        return;
-    }
-
-
-    itens.push({
-
-        nome:
-            produto.nome,
-
-        quantidade:
-            1,
-
-        ean:
-            produto.ean || null
-    });
-
-
-    salvarLista();
-
-
-    registrarEvento(
-        "acabou",
+    adicionarItem(
         produto.nome,
         produto.ean || null,
-        1
+        true,
+        "previsto"
     );
 
 
-    atualizarLista();
-    atualizarPrevisoes();
-
-
     mostrarMensagem(
-        `${produto.nome} adicionado à lista`
+        `${produto.nome} adicionado preventivamente à lista`
     );
 }
 
@@ -1331,41 +1387,37 @@ function atualizarPrevisoes() {
     // ==========================================
 
     if (
-        quantidadeAcionavel > 1
+    quantidadeAcionavel > 1
     ) {
 
-        const botaoTodos =
-            document.createElement(
-                "button"
-            );
+    const botaoTodos =
+        document.createElement(
+            "button"
+        );
 
 
-        botaoTodos.type =
-            "button";
+    botaoTodos.type =
+        "button";
 
 
-        botaoTodos.className =
-            "adicionar-todos";
+    botaoTodos.className =
+        "adicionar-todos";
 
 
-        botaoTodos.textContent =
-            `Adicionar ${quantidadeAcionavel} itens à lista`;
+    botaoTodos.textContent =
+        `Adicionar ${quantidadeAcionavel} itens à lista`;
 
 
-        botaoTodos.addEventListener(
-            "click",
-            () => {
+    botaoTodos.addEventListener(
+        "click",
+        () => {
 
-                produtosAcionaveis.forEach(
-                    produto => {
+            produtosAcionaveis.forEach(
+                produto => {
 
-                        /*
-                            Evita aumentar quantidade
-                            caso já esteja na lista.
-                        */
-
-                        const jaExiste =
-                            itens.some(item => {
+                    const jaExiste =
+                        itens.some(
+                            item => {
 
                                 if (
                                     produto.ean &&
@@ -1391,56 +1443,43 @@ function atualizarPrevisoes() {
                                         item.nome
                                     ).toLowerCase()
                                 );
-                            });
+                            }
+                        );
 
 
-                        if (!jaExiste) {
+                    if (!jaExiste) {
 
-                            itens.push({
-
-                                nome:
-                                    produto.nome,
-
-                                quantidade:
-                                    1,
-
-                                ean:
-                                    produto.ean || null
-                            });
-
-
-                            registrarEvento(
-                                "acabou",
-                                produto.nome,
-                                produto.ean || null,
-                                1
-                            );
-                        }
+                        adicionarItem(
+                            produto.nome,
+                            produto.ean || null,
+                            true,
+                            "previsto"
+                        );
                     }
-                );
+                }
+            );
 
 
-                salvarLista();
-
-                atualizarLista();
-                atualizarPrevisoes();
+            atualizarLista();
+            atualizarPrevisoes();
 
 
-                mostrarMensagem(
-                    "Itens previstos adicionados à lista"
-                );
-            }
-        );
+            mostrarMensagem(
+                "Itens previstos adicionados à lista"
+            );
+        }
+    );
 
 
-        previsoesBox.appendChild(
-            botaoTodos
-        );
-    }
+    previsoesBox.appendChild(
+        botaoTodos
+    );
+}
 
 
     atualizarPainelRapido();
 }
+
 
 
 // ==================================================
@@ -1509,11 +1548,27 @@ function atualizarResumo() {
 
         if (resumo.ultimoEvento) {
 
-            ultimoTexto =
+            if (
                 resumo.ultimoEvento.tipo ===
                 "acabou"
-                    ? "ACABOU"
-                    : "COMPRADO";
+            ) {
+
+                ultimoTexto =
+                    "ACABOU";
+
+            } else if (
+                resumo.ultimoEvento.tipo ===
+                "previsto"
+            ) {
+
+                ultimoTexto =
+                    "PREVISTO";
+
+            } else {
+
+                ultimoTexto =
+                    "COMPRADO";
+            }
         }
 
 
@@ -1573,7 +1628,7 @@ function atualizarResumo() {
                 <div class="metrica">
 
                     <span>
-                        Duração média
+                        Duração média / unidade
                     </span>
 
                     <strong>
@@ -1589,7 +1644,7 @@ function atualizarResumo() {
                 <div class="metrica">
 
                     <span>
-                        Faixa observada
+                        Faixa / unidade
                     </span>
 
                     <strong>
@@ -1758,11 +1813,141 @@ function atualizarLista() {
     );
 }
 
+function prepararControleItem(
+    item
+) {
+
+    if (
+        !Array.isArray(
+            item.eventosLista
+        )
+    ) {
+
+        item.eventosLista =
+            [];
+    }
+
+
+    return item;
+}
+
+
+function removerEventoHistoricoPorId(
+    id
+) {
+
+    if (!id) {
+        return false;
+    }
+
+
+    const indice =
+        historico.findIndex(
+            evento =>
+                String(evento.id) ===
+                String(id)
+        );
+
+
+    if (
+        indice === -1
+    ) {
+
+        return false;
+    }
+
+
+    historico.splice(
+        indice,
+        1
+    );
+
+
+    return true;
+}
+
+
+function removerUltimoEventoDaLista(
+    item
+) {
+
+    prepararControleItem(
+        item
+    );
+
+
+    /*
+        Primeiro tenta usar o vínculo
+        criado pela V2.2.
+    */
+
+    if (
+        item.eventosLista.length > 0
+    ) {
+
+        const id =
+            item.eventosLista.pop();
+
+
+        return (
+            removerEventoHistoricoPorId(
+                id
+            )
+        );
+    }
+
+
+    /*
+        Compatibilidade com itens que já
+        estavam na lista antes da V2.2.
+    */
+
+    for (
+        let i =
+            historico.length - 1;
+
+        i >= 0;
+
+        i--
+    ) {
+
+        const evento =
+            historico[i];
+
+
+        if (
+            mesmoProduto(
+                item,
+                evento
+            ) &&
+            (
+                evento.tipo ===
+                    "acabou" ||
+
+                evento.tipo ===
+                    "previsto"
+            )
+        ) {
+
+            historico.splice(
+                i,
+                1
+            );
+
+
+            return true;
+        }
+    }
+
+
+    return false;
+}
 
 function adicionarItem(
     nome,
     ean = null,
-    registrar = true
+    registrar = true,
+    tipoEvento = "acabou"
 ) {
 
     nome =
@@ -1771,31 +1956,59 @@ function adicionarItem(
 
     const existente =
         itens.find(
-            item =>
-                item.nome
-                    .toLowerCase() ===
-                nome
-                    .toLowerCase()
+            item => {
+
+                if (
+                    ean &&
+                    item.ean
+                ) {
+
+                    return (
+                        String(item.ean) ===
+                        String(ean)
+                    );
+                }
+
+
+                return (
+                    item.nome
+                        .toLowerCase() ===
+                    nome
+                        .toLowerCase()
+                );
+            }
         );
+
+
+    let item;
 
 
     if (existente) {
 
-        existente.quantidade++;
+        item =
+            existente;
+
+
+        prepararControleItem(
+            item
+        );
+
+
+        item.quantidade++;
 
 
         if (
-            !existente.ean &&
+            !item.ean &&
             ean
         ) {
 
-            existente.ean =
+            item.ean =
                 ean;
         }
 
     } else {
 
-        itens.push({
+        item = {
 
             nome:
                 nome,
@@ -1804,24 +2017,37 @@ function adicionarItem(
                 1,
 
             ean:
-                ean
-        });
+                ean,
+
+            eventosLista:
+                []
+        };
+
+
+        itens.push(
+            item
+        );
     }
-
-
-    salvarLista();
 
 
     if (registrar) {
 
-        registrarEvento(
-            "acabou",
-            nome,
-            ean,
-            1
+        const eventoId =
+            registrarEvento(
+                tipoEvento,
+                nome,
+                ean,
+                1
+            );
+
+
+        item.eventosLista.push(
+            eventoId
         );
     }
 
+
+    salvarLista();
 
     atualizarLista();
     atualizarPrevisoes();
@@ -1860,15 +2086,49 @@ function lidarCliqueLista(event) {
     }
 
 
-    if (acao === "mais") {
+    prepararControleItem(
+        item
+    );
+
+
+    if (
+        acao === "mais"
+    ) {
 
         item.quantidade++;
     }
 
 
-    if (acao === "menos") {
+    if (
+        acao === "menos"
+    ) {
 
         item.quantidade--;
+
+
+        /*
+            Só desfaz eventos quando existem
+            mais eventos ligados à lista do que
+            unidades restantes.
+
+            Exemplo:
+
+            scanner x2 -> 2 eventos
+            remove 1   -> remove 1 evento
+
+            scanner x1 + botão "+" -> 1 evento
+            remove 1 quantidade    -> mantém evento
+        */
+
+        while (
+            item.eventosLista.length >
+            item.quantidade
+        ) {
+
+            removerUltimoEventoDaLista(
+                item
+            );
+        }
 
 
         if (
@@ -1908,9 +2168,13 @@ function lidarCliqueLista(event) {
 
 
     salvarLista();
+    salvarHistorico();
 
     atualizarLista();
+    atualizarHistorico();
+    atualizarResumo();
     atualizarPrevisoes();
+    atualizarProdutos();
 }
 
 
@@ -1926,7 +2190,7 @@ function limparLista() {
 
     const confirmar =
         confirm(
-            "Limpar toda a lista?"
+            "Limpar toda a lista?\n\nAs inclusões ainda não compradas também serão removidas do histórico."
         );
 
 
@@ -1935,13 +2199,58 @@ function limparLista() {
     }
 
 
+    itens.forEach(
+        item => {
+
+            prepararControleItem(
+                item
+            );
+
+
+            if (
+                item.eventosLista.length
+            ) {
+
+                while (
+                    item.eventosLista.length
+                ) {
+
+                    removerUltimoEventoDaLista(
+                        item
+                    );
+                }
+
+            } else {
+
+                /*
+                    Compatibilidade com lista
+                    criada antes da V2.2.
+                */
+
+                removerUltimoEventoDaLista(
+                    item
+                );
+            }
+        }
+    );
+
+
     itens = [];
 
 
     salvarLista();
+    salvarHistorico();
 
     atualizarLista();
+    atualizarHistorico();
+    atualizarResumo();
     atualizarPrevisoes();
+    atualizarProdutos();
+
+
+    mostrarMensagem(
+        "Lista limpa"
+    );
 }
 
 
